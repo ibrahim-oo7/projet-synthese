@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SuperNavbar from "../components/SuperNavbar";
 import api from "../services/api";
 import { logout } from "../services/authService";
 import "../style/Centers.css";
 
 function Centers() {
+  const navigate = useNavigate();
+
   const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -255,6 +258,13 @@ function Centers() {
                       </td>
                       <td>
                         <div className="sup-table-actions">
+                          <button
+                            className="sup-btn sup-btn-light"
+                            onClick={() => navigate(`/centers/${center.id}`)}
+                          >
+                            View Details
+                          </button>
+
                           {center.status === "active" ? (
                             <button
                               className="sup-btn sup-btn-warning"
