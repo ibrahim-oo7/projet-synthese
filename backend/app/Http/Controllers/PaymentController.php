@@ -11,6 +11,16 @@ class PaymentController extends Controller
 
     public function __construct(PaymentService $paymentService)
     {
+        $this->middleware(function ($request, $next) {
+            if (!auth('super_admin')->check()) {
+                return response()->json([
+                    'message' => 'Unauthorized. Super Admin access only.',
+                ], 403);
+            }
+
+            return $next($request);
+        });
+
         $this->paymentService = $paymentService;
     }
 

@@ -8,6 +8,19 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (!auth('super_admin')->check()) {
+                return response()->json([
+                    'message' => 'Unauthorized. Super Admin access only.',
+                ], 403);
+            }
+
+            return $next($request);
+        })->only(['logout', 'me']);
+    }
+
     public function login(Request $request)
     {
         $request->validate([

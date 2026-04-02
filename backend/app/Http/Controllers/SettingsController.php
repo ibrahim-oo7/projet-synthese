@@ -11,6 +11,16 @@ class SettingsController extends Controller
 
     public function __construct(SettingsService $settingsService)
     {
+        $this->middleware(function ($request, $next) {
+            if (!auth('super_admin')->check()) {
+                return response()->json([
+                    'message' => 'Unauthorized. Super Admin access only.',
+                ], 403);
+            }
+
+            return $next($request);
+        });
+
         $this->settingsService = $settingsService;
     }
 
