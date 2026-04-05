@@ -9,43 +9,46 @@ class CenterRequestSeeder extends Seeder
 {
     public function run(): void
     {
-        CenterRequest::insert([
+        CenterRequest::updateOrCreate(
+            ['email' => 'atlas.center@example.com'],
             [
-                'name' => 'Bright Future Center',
-                'email' => 'bright.future@example.com',
-                'phone' => '0611111111',
-                'city' => 'Rabat',
-                'address' => 'Hay Riad',
-                'message' => 'We would like to register our center on the platform.',
+                'name' => 'Atlas Learning Center',
+                'phone' => '0612345678',
+                'city' => 'Tangier',
+                'address' => 'Avenue Mohammed V, Tangier',
+                'message' => 'We would like to join the platform and create our center account.',
                 'status' => 'pending',
                 'reviewed_at' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+                'reject_reason' => null,
+            ]
+        );
+
+        CenterRequest::updateOrCreate(
+            ['email' => 'future.skills@example.com'],
             [
-                'name' => 'Success Academy',
-                'email' => 'success.academy@example.com',
-                'phone' => '0622222222',
-                'city' => 'Casablanca',
-                'address' => 'Maarif',
-                'message' => 'Please review and approve our registration request.',
-                'status' => 'accepted',
-                'reviewed_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+                'name' => 'Future Skills Academy',
+                'phone' => '0623456789',
+                'city' => 'Tetouan',
+                'address' => 'Hay Nahda, Tetouan',
+                'message' => 'Please review our registration request. We are ready to start.',
+                'status' => 'pending',
+                'reviewed_at' => null,
+                'reject_reason' => null,
+            ]
+        );
+
+        CenterRequest::updateOrCreate(
+            ['email' => 'bright.kids@example.com'],
             [
-                'name' => 'Atlas Learning Hub',
-                'email' => 'atlas.learning@example.com',
-                'phone' => '0633333333',
-                'city' => 'Marrakech',
-                'address' => 'Gueliz',
-                'message' => 'We are interested in joining the platform.',
-                'status' => 'rejected',
-                'reviewed_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+                'name' => 'Bright Kids Center',
+                'phone' => '0634567890',
+                'city' => 'Chefchaouen',
+                'address' => 'Centre Ville, Chefchaouen',
+                'message' => 'Our center wants to be part of the system. Please review our application.',
+                'status' => 'pending',
+                'reviewed_at' => null,
+                'reject_reason' => null,
+            ]
+        );
     }
 }

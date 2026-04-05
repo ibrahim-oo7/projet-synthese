@@ -73,7 +73,7 @@ class CenterRequestService
     /**
      * Reject center request
      */
-    public function rejectRequest(int $id)
+    public function rejectRequest(int $id, array $data = [])
     {
         $centerRequest = CenterRequest::findOrFail($id);
 
@@ -84,15 +84,17 @@ class CenterRequestService
         $centerRequest->update([
             'status' => 'rejected',
             'reviewed_at' => now(),
+            'reject_reason' => $data['reject_reason'] ?? null,
         ]);
 
-        // Log activity
         ActivityLog::create([
             'action' => 'reject_request',
-            'description' => 'Center request rejected: ' . $centerRequest->name,
+            'description' => 'Center request rejected: ' . $centerRequest->name .
+                ($data['reject_reason'] ? ' | Reason: ' . $data['reject_reason'] : ''),
             'performed_by' => 'Super Admin',
         ]);
 
         return $centerRequest;
     }
+    
 }

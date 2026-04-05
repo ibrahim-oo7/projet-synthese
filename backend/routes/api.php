@@ -18,6 +18,7 @@ Route::middleware(['auth:super_admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::get('/center-requests', [CenterRequestController::class, 'index']);
+    Route::get('/center-requests/{id}', [CenterRequestController::class, 'show']);
     Route::post('/center-requests/{id}/approve', [CenterRequestController::class, 'approve']);
     Route::post('/center-requests/{id}/reject', [CenterRequestController::class, 'reject']);
 

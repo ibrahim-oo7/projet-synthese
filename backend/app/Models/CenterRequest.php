@@ -15,5 +15,6 @@ class CenterRequest extends Model
         'message',
         'status',
         'reviewed_at',
+        'reject_reason',
     ];
 }

@@ -16,6 +16,37 @@ function Centers() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [actionLoading, setActionLoading] = useState({});
 
+  const [toast, setToast] = useState({
+    open: false,
+    type: "success",
+    message: "",
+  });
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const showToast = useCallback((type, message) => {
+    setToast({
+      open: true,
+      type,
+      message,
+    });
+  }, []);
+
+  const closeToast = useCallback(() => {
+    setToast((prev) => ({ ...prev, open: false }));
+  }, []);
+
+  useEffect(() => {
+    if (!toast.open) return;
+
+    const timer = setTimeout(() => {
+      closeToast();
+    }, 3200);
+
+    return () => clearTimeout(timer);
+  }, [toast.open, closeToast]);
+
   const fetchCenters = useCallback(async (manualRefresh = false) => {
     try {
       setError("");
@@ -66,9 +97,13 @@ function Centers() {
       setRowLoading(id, true);
       await api.patch(`/centers/${id}/disable`);
       await fetchCenters();
+      showToast("success", "Center disabled successfully.");
     } catch (err) {
       console.error("Disable center error:", err);
-      alert(err?.response?.data?.message || "Failed to disable center.");
+      showToast(
+        "error",
+        err?.response?.data?.message || "Failed to disable center."
+      );
     } finally {
       setRowLoading(id, false);
     }
@@ -79,30 +114,45 @@ function Centers() {
       setRowLoading(id, true);
       await api.patch(`/centers/${id}/activate`);
       await fetchCenters();
+      showToast("success", "Center activated successfully.");
     } catch (err) {
       console.error("Activate center error:", err);
-      alert(err?.response?.data?.message || "Failed to activate center.");
+      showToast(
+        "error",
+        err?.response?.data?.message || "Failed to activate center."
+      );
     } finally {
       setRowLoading(id, false);
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this center?"
-    );
+  const openDeleteModal = (center) => {
+    setDeleteTarget(center);
+    setDeleteModalOpen(true);
+  };
 
-    if (!confirmed) return;
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
 
     try {
-      setRowLoading(id, true);
-      await api.delete(`/centers/${id}`);
+      setRowLoading(deleteTarget.id, true);
+      await api.delete(`/centers/${deleteTarget.id}`);
       await fetchCenters();
+      closeDeleteModal();
+      showToast("success", "Center deleted successfully.");
     } catch (err) {
       console.error("Delete center error:", err);
-      alert(err?.response?.data?.message || "Failed to delete center.");
+      showToast(
+        "error",
+        err?.response?.data?.message || "Failed to delete center."
+      );
     } finally {
-      setRowLoading(id, false);
+      setRowLoading(deleteTarget?.id, false);
     }
   };
 
@@ -150,6 +200,19 @@ function Centers() {
           refreshing={refreshing}
           onLogout={handleLogout}
         />
+
+        {toast.open && (
+          <div className={`sup-toast sup-toast-${toast.type}`}>
+            <div className="sup-toast-content">
+              <strong>{toast.type === "success" ? "Success" : "Error"}</strong>
+              <span>{toast.message}</span>
+            </div>
+            <button className="sup-toast-close" onClick={closeToast}>
+              ×
+            </button>
+          </div>
+        )}
+
         <div className="sup-state-box sup-error-box">
           <h2>Centers Error</h2>
           <p>{error}</p>
@@ -168,6 +231,18 @@ function Centers() {
         refreshing={refreshing}
         onLogout={handleLogout}
       />
+
+      {toast.open && (
+        <div className={`sup-toast sup-toast-${toast.type}`}>
+          <div className="sup-toast-content">
+            <strong>{toast.type === "success" ? "Success" : "Error"}</strong>
+            <span>{toast.message}</span>
+          </div>
+          <button className="sup-toast-close" onClick={closeToast}>
+            ×
+          </button>
+        </div>
+      )}
 
       <main className="sup-main">
         <section className="sup-topbar-row">
@@ -285,7 +360,7 @@ function Centers() {
 
                           <button
                             className="sup-btn sup-btn-danger"
-                            onClick={() => handleDelete(center.id)}
+                            onClick={() => openDeleteModal(center)}
                             disabled={!!actionLoading[center.id]}
                           >
                             {actionLoading[center.id] ? "Processing..." : "Delete"}
@@ -302,6 +377,53 @@ function Centers() {
           )}
         </section>
       </main>
+
+      {deleteModalOpen && (
+        <div className="sup-modal-overlay" onClick={closeDeleteModal}>
+          <div
+            className="sup-modal delete-center-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sup-modal-head">
+              <div>
+                <h3>Delete Center</h3>
+                <p>
+                  This action will permanently remove this center from the platform.
+                </p>
+              </div>
+
+              <button className="sup-modal-close" onClick={closeDeleteModal}>
+                ×
+              </button>
+            </div>
+
+            <div className="delete-center-body">
+              <div className="delete-center-warning">
+                <span>Center Name</span>
+                <strong>{deleteTarget?.name || "-"}</strong>
+              </div>
+
+              <p className="delete-center-text">
+                Are you sure you want to delete this center? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="sup-modal-footer">
+              <button className="sup-btn sup-btn-light" onClick={closeDeleteModal}>
+                Cancel
+              </button>
+
+              <button
+                className="sup-btn sup-btn-danger"
+                onClick={handleConfirmDelete}
+                disabled={!!actionLoading[deleteTarget?.id]}
+              >
+                {actionLoading[deleteTarget?.id] ? "Processing..." : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

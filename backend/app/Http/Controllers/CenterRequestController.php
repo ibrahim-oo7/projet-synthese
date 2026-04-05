@@ -22,6 +22,15 @@ class CenterRequestController extends Controller
         return response()->json($requests);
     }
 
+    public function show($id)
+    {
+        $requestItem = CenterRequest::findOrFail($id);
+
+        return response()->json([
+            'data' => $requestItem
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -57,10 +66,14 @@ class CenterRequestController extends Controller
         }
     }
 
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
+        $validated = $request->validate([
+            'reject_reason' => 'required|string|min:3|max:1000',
+        ]);
+
         try {
-            $result = $this->centerRequestService->rejectRequest((int) $id);
+            $result = $this->centerRequestService->rejectRequest((int) $id, $validated);
 
             return response()->json([
                 'message' => 'Center request rejected successfully',
