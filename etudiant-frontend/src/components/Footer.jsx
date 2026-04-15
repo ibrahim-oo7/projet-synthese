@@ -80,7 +80,7 @@ const styles = {
         backgroundColor: '#1a1a2e',
         color: 'white',
         padding: '4rem 5% 2rem',
-        marginTop: '4rem'
+       
     },
     container: {
         maxWidth: '1200px',

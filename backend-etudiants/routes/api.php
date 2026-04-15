@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -27,7 +28,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->put('/update-profile', [AuthController::class, 'updateProfile']);
+
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendCode']);
+Route::post('/verify-code', [ForgotPasswordController::class, 'verifyCode']);
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);Route::middleware('auth:sanctum')->put('/update-profile', [AuthController::class, 'updateProfile']);
 
 Route::post('/enroll/{course}',[enrollmentController::class,'enroll'])
 ->middleware('auth:sanctum');

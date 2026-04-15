@@ -25,6 +25,11 @@ import Ho from "../componentsQuiz/Ho";
 import Certificate from "../pages/student/Certificate";
 import MyCertificates from "../pages/student/MyCertificates";
 
+import ForgetPassword from "../pages/public/forgetPassword";
+import ResetPassword from "../pages/public/resetPassword";
+import VerifyPassword from "../pages/public/verifyPassword";
+
+
 export default function AppRoutes(){
     return(
         <BrowserRouter>
@@ -38,6 +43,9 @@ export default function AppRoutes(){
                  <Route path="/blog" element={<Blog/>} />   
                  <Route path="/login" element={<Login/>}/>
                 <Route path="/register" element={<Register/>}/>
+                <Route path="/forgetPassword" element={<ForgetPassword/>}/>
+                <Route path="/resetPassword" element={<ResetPassword/>}/>
+                <Route path="/verifyPassword" element={<VerifyPassword/>}/>
                 <Route path="/student/dashboard" element={<ProtectedRoute><Dashboard/></ProtectedRoute>} />
                 <Route path="/student/my-courses" element={<ProtectedRoute><MyCourses /></ProtectedRoute>} />
                 <Route path="/certificate/:courseId" element={<ProtectedRoute><Certificate /></ProtectedRoute>} />

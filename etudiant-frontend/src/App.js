@@ -8,6 +8,8 @@ import axios from 'axios';
 import logo from './logo.svg';
 import './App.css';
 import AppRoutes from './routes/AppRoutes';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Set up axios interceptor for token
 axios.interceptors.request.use(
@@ -42,6 +44,7 @@ function AppContent() {
   return (
     <div className="App">
       <AppRoutes />
+      <ToastContainer />
     </div>
   );
 }

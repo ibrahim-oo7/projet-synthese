@@ -149,7 +149,7 @@ export default function Login() {
               <span>Keep me logged in</span>
             </label>
 
-            <Link to="/forgot-password" style={styles.forgotLink}>
+            <Link to="/forgetPassword" style={styles.forgotLink}>
               Forgot Password?
             </Link>
           </div>

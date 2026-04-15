@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
 import { enrollCourse } from "../../features/enrollments/enrollmentSlice";
 
 export default function Enroll() {
@@ -48,7 +49,7 @@ export default function Enroll() {
       );
 
       dispatch(enrollCourse({ courseId: Number(id) }));
-      alert("Enrolled successfully!");
+      toast.success("Enrolled successfully!");
       navigate("/student/dashboard");
       window.scrollTo(0, 0); 
     } catch (error) {
