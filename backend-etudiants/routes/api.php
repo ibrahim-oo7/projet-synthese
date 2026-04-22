@@ -22,40 +22,38 @@ use App\Models\Certificat;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
 
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendCode']);
 Route::post('/verify-code', [ForgotPasswordController::class, 'verifyCode']);
-Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);Route::middleware('auth:sanctum')->put('/update-profile', [AuthController::class, 'updateProfile']);
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);Route::middleware('auth:api')->put('/update-profile', [AuthController::class, 'updateProfile']);
 
 Route::post('/enroll/{course}',[enrollmentController::class,'enroll'])
-->middleware('auth:sanctum');
+->middleware('auth:api');
 
 Route::get('/my-enrollments',[enrollmentController::class,'myEnrollments'])
-->middleware('auth:sanctum');
+->middleware('auth:api');
 
 Route::post('/progress', [progressController::class, 'progress']);
 Route::get('/progress/{studentId}', [progressController::class, 'getStudentProgress']);
 Route::get('/progress/{studentId}/{courseId}', [progressController::class, 'getCourseProgress']);
 
-Route::get('/certificates/{courseId}', [certificatController::class, 'show'])->middleware('auth:sanctum');
-Route::get('/my-certificates', [CertificatController::class, 'myCertificates'])->middleware('auth:sanctum');
+Route::get('/certificates/{courseId}', [certificatController::class, 'show'])->middleware('auth:api');
+Route::get('/my-certificates', [CertificatController::class, 'myCertificates'])->middleware('auth:api');
 Route::get('/certificates/{courseId}/download', [CertificatController::class, 'downloadPdf'])
-    ->middleware('auth:sanctum');
+    ->middleware('auth:api');
 
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:api')->group(function () {
     Route::post('/quiz-results', [QuizResultController::class, 'store']);
     Route::get('/quiz-results', [QuizResultController::class, 'myResults']);
     Route::get('/quiz-results/{course_id}', [QuizResultController::class, 'showByCourse']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:api')->group(function () {
     Route::get('/student/profile',[StudentController::class,'profile']);
-    Route::put('/student/update-profile',[StudentController::class,'updateProfile']);
+   
 });

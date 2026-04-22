@@ -9,7 +9,6 @@ import {
   FaCertificate,
   FaArrowRight,
   FaPlay,
-  FaHeart,
   FaSignOutAlt,
   FaChartLine,
   FaCheckCircle,
@@ -19,10 +18,10 @@ import {
   FaSpinner
 } from "react-icons/fa";
 
-import { courses } from "../../data/courses";
 import Progress from "./Progress";
 import { useNavigate } from "react-router-dom";
-import { enrollCourse, setEnrollments, clearEnrollments } from "../../features/enrollments/enrollmentSlice";
+import { setEnrollments, clearEnrollments } from "../../features/enrollments/enrollmentSlice";
+import { fetchAllCourses, normalizeCourse } from "../../services/courseApi";
 
 const styles = {
   container: {
@@ -392,9 +391,13 @@ const styles = {
 };
 
 export default function Dashboard() {
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
+  const isAuthenticated = !!token;
+
   const myCoursesIds = useSelector((state) => state.enrollments.myCourses);
 
+  const [allCourses, setAllCourses] = useState([]);
   const [coursesProgress, setCoursesProgress] = useState({});
   const [certificates, setCertificates] = useState([]);
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -405,8 +408,8 @@ export default function Dashboard() {
 
   console.log("Dashboard render - isAuthenticated:", isAuthenticated, "user:", user, "loading:", loading);
 
-  const enrolledCourses = courses.filter((course) =>
-    myCoursesIds.includes(course.id)
+  const enrolledCourses = allCourses.filter((course) =>
+    myCoursesIds.includes(Number(course.id))
   );
 
   const completedCourses = enrolledCourses
@@ -446,7 +449,7 @@ export default function Dashboard() {
   ];
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!token) {
       window.scrollTo(0, 0);
       navigate("/login");
       return;
@@ -459,7 +462,27 @@ export default function Dashboard() {
     };
 
     load();
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, token]);
+
+  useEffect(() => {
+    const loadAllCourses = async () => {
+      try {
+        const data = await fetchAllCourses();
+
+        const list =
+          Array.isArray(data) ? data :
+          Array.isArray(data.data) ? data.data :
+          Array.isArray(data.courses) ? data.courses :
+          [];
+
+        setAllCourses(list.map(normalizeCourse));
+      } catch (error) {
+        console.log("DASHBOARD COURSES ERROR:", error.response?.data || error.message);
+      }
+    };
+
+    loadAllCourses();
+  }, []);
 
   useEffect(() => {
     const fetchEnrollments = async () => {
@@ -483,19 +506,16 @@ export default function Dashboard() {
           }
         );
 
-        // Sync enrollments with Redux state
-        const enrolledCourseIds = res.data.map(enrollment => enrollment.course_id);
+        const enrolledCourseIds = res.data.map((enrollment) => Number(enrollment.course_id));
         dispatch(setEnrollments(enrolledCourseIds));
 
         console.log("Enrollments synced:", res.data);
       } catch (error) {
         console.log("Error fetching enrollments:", error.response?.data || error.message);
-        // If API fails, clear enrollments to match database state
         dispatch(setEnrollments([]));
       }
     };
 
-    // Add a small delay to ensure component is mounted
     const timer = setTimeout(() => {
       fetchEnrollments();
     }, 100);
@@ -665,20 +685,6 @@ export default function Dashboard() {
               <span style={styles.navButtonBadge}>{certificates.length}</span>
             )}
           </button>
-
-          {/* <button
-            onClick={() => setActiveTab("wishlist")}
-            style={{
-              ...styles.navButton,
-              ...(activeTab === "wishlist" ? styles.navButtonActive : {})
-            }}
-          >
-            <FaHeart style={styles.navButtonIcon} />
-            Wishlist
-            {wishlist.length > 0 && (
-              <span style={styles.navButtonBadge}>{wishlist.length}</span>
-            )}
-          </button> */}
         </nav>
 
         <button onClick={handleLogout} style={styles.logoutButton}>
@@ -693,7 +699,6 @@ export default function Dashboard() {
             {activeTab === "courses" && "My Courses"}
             {activeTab === "completed" && "Completed Courses"}
             {activeTab === "certificates" && "Certificates"}
-            {/* {activeTab === "wishlist" && "Wishlist"} */}
           </h1>
 
           <p style={styles.pageSubtitle}>
@@ -701,7 +706,6 @@ export default function Dashboard() {
             {activeTab === "courses" && "Continue your learning journey"}
             {activeTab === "completed" && "Courses you've successfully completed"}
             {activeTab === "certificates" && "Your earned certificates"}
-            {/* {activeTab === "wishlist" && "Courses you want to take"} */}
           </p>
         </div>
 
@@ -743,38 +747,12 @@ export default function Dashboard() {
             </div>
 
             <Progress
-              courses={courses}
+              courses={allCourses}
               completedCourses={completedCourses}
               coursesProgress={coursesProgress}
             />
 
-            <div style={styles.section}>
-              <div style={styles.sectionHeader}>
-                <div style={styles.sectionTitle}>
-                  <FaClock style={{ color: "#15BE6A" }} />
-                  Recent Activity
-                </div>
-                <button style={styles.viewAllButton}>
-                  View All <FaChevronRight />
-                </button>
-              </div>
-
-              <div style={styles.activityList}>
-                {recentActivity.map((act) => (
-                  <div key={act.id} style={styles.activityItem}>
-                    <div style={styles.activityIcon}>{act.icon}</div>
-                    <div style={styles.activityContent}>
-                      <div style={styles.activityTitle}>{act.title}</div>
-                      <div style={styles.activityDate}>
-                        <FaCalendarAlt style={{ fontSize: "12px" }} />
-                        {formatDate(act.date)}
-                      </div>
-                    </div>
-                    <FaChevronRight style={{ color: "#dee2e6" }} />
-                  </div>
-                ))}
-              </div>
-            </div>
+           
           </>
         )}
 
@@ -801,6 +779,7 @@ export default function Dashboard() {
                     key={course.id}
                     course={course}
                     progress={coursesProgress[course.id] || 0}
+                    isEnrolled={true}
                   />
                 ))}
               </div>
@@ -864,10 +843,10 @@ export default function Dashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={styles.certificateTitle}>
-                                          {
-                      courses.find((course) => course.id === Number(cert.course_id))?.title
-                      || `Course #${cert.course_id}`
-                    }
+                      {
+                        allCourses.find((course) => course.id === Number(cert.course_id))?.title
+                        || `Course #${cert.course_id}`
+                      }
                     </div>
                     <div style={styles.certificateDate}>
                       Issued: {formatDate(cert.issued_at)}
@@ -879,30 +858,6 @@ export default function Dashboard() {
             )}
           </div>
         )}
-
-        {/* {activeTab === "wishlist" && (
-          <div>
-            {wishlist.length === 0 ? (
-              <div style={styles.emptyState}>
-                <FaHeart style={styles.emptyIcon} />
-                <div style={styles.emptyTitle}>Your wishlist is empty</div>
-                <div style={styles.emptyText}>
-                  Browse courses and add your favorites to wishlist
-                </div>
-                <button
-                  onClick={() => { window.scrollTo(0, 0); navigate("/courses"); }}
-                  style={styles.goToCoursesBtn}
-                >
-                  Browse Courses <FaArrowRight />
-                </button>
-              </div>
-            ) : (
-              wishlist.map((item) => (
-                <div key={item.id}>{item.title}</div>
-              ))
-            )}
-          </div>
-        )} */}
       </main>
     </div>
   );

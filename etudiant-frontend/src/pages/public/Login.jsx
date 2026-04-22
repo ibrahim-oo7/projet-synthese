@@ -56,37 +56,57 @@ export default function Login() {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const newErrors = validateForm();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+  const newErrors = validateForm();
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
 
-    try {
-      const payload = {
-        email: formData.email,
-        password: formData.password,
-      };
+  try {
+    const payload = {
+      email: formData.email,
+      password: formData.password,
+    };
 
-      const res = await axios.post(
-        "http://127.0.0.1:8000/api/login",
-        payload
-      );
+    const res = await axios.post(
+      "http://127.0.0.1:8001/api/login",
+      payload
+    );
 
-      localStorage.setItem("token", res.data.token);
-      dispatch(loginSucces(res.data.user));
-      navigate("/student/dashboard");
-    } catch (err) {
-      console.log(err.response?.data || err.message);
+    const token = res.data.token;
 
-      setErrors({
-        email: "Invalid email or password",
-      });
-    }
-  };
+    // حفظ token
+    localStorage.setItem("token", token);
+
+   
+    const profileRes = await axios.get(
+      "http://127.0.0.1:8001/api/student/profile",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }
+    );
+
+    // حفظ user كامل
+    localStorage.setItem("user", JSON.stringify(profileRes.data));
+
+    console.log("LOGIN SUCCESS:", profileRes.data);
+
+    navigate("/student/dashboard");
+
+  } catch (err) {
+    console.log(err.response?.data || err.message);
+
+    setErrors({
+      email: "Invalid email or password",
+    });
+  }
+};
 
   return (
     <div style={styles.container}>

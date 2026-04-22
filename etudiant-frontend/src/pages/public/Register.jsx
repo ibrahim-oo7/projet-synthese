@@ -81,7 +81,7 @@ export default function Register(){
     };
 
     const res = await axios.post(
-      "http://127.0.0.1:8000/api/register",
+      "http://127.0.0.1:8001/api/register",
       payload
     );
     navigate("/student/dashboard")

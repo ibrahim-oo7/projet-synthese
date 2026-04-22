@@ -1,205 +1,243 @@
-import { FaStar, FaUserGraduate, FaClock } from "react-icons/fa";
-import { useSelector,useDispatch } from "react-redux";
-import {  useNavigate } from "react-router-dom";
+import { FaStar, FaClock, FaUserGraduate } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
+export default function CourseCard({ course, progress = 0, isEnrolled = false }) {
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-export default function CourseCard({course, progress = 0 }){
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
-    const myCourses = useSelector((state) => state.enrollments.myCourses);
-    const navigate=useNavigate();
-  
-  if(!course){
-    return <h2 style={{textAlign:"center", padding: "4rem", color: "#666"}}>Course not found</h2>
+  if (!course) {
+    return (
+      <h2 style={{ textAlign: "center", padding: "4rem", color: "#666" }}>
+        Course not found
+      </h2>
+    );
   }
 
-    const handleEnroll = () => {
-    if (!isAuthenticated) {
-        window.scrollTo(0, 0);
-        navigate("/login");
-        return;
+  const image =
+    course.course_image ||
+    course.image ||
+    "https://via.placeholder.com/400x240?text=Course";
+
+  const teacherName =
+    course.teacher?.name ||
+    course.teacher?.full_name ||
+    course.instructor ||
+    "Unknown instructor";
+
+  const category = course.category || "General";
+  const level = course.level || "Beginner";
+  const rating = Number(course.rating || 0).toFixed(1);
+
+  const lessonsCount = Array.isArray(course.lessons) ? course.lessons.length : 0;
+
+  const totalDurationMinutes = Array.isArray(course.lessons)
+    ? course.lessons.reduce((sum, lesson) => sum + Number(lesson.duration || 0), 0)
+    : 0;
+
+  const durationText =
+    totalDurationMinutes > 0 ? `${totalDurationMinutes} min` : "N/A";
+
+  const handleEnroll = () => {
+    if (!token) {
+      window.scrollTo(0, 0);
+      navigate("/login");
+      return;
     }
 
-  // check already enrolled
-  if (myCourses.includes(course.id)){
-      window.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+
+    if (isEnrolled) {
       navigate(`/course/${course.id}`);
-    return;
-  }
+    } else {
+      navigate(`/Enroll/${course.id}`);
+    }
+  };
 
-  window.scrollTo(0, 0);
-  navigate(`/Enroll/${course.id}`);
-};
+  return (
+    <div style={styles.card}>
+      <div style={styles.imageContainer}>
+        <img src={image} alt={course.title} style={styles.image} />
+        <span style={styles.badge}>{level}</span>
+      </div>
 
-console.log("progress prop:", progress, typeof progress);
-
-    return(
-        <div style={styles.card} >
-            <div style={styles.imageContainer}>
-                <img src={course.image} alt={course.title} style={styles.image}/>
-                <span style={styles.badge}>{course.level}</span>
-            </div>
-        {progress > 0 && (
+      {progress > 0 && (
         <div style={styles.progressContainer}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <div style={styles.progressHeader}>
             <span style={styles.progressLabel}>Progress</span>
             <span style={styles.progressLabel}>{progress}%</span>
-            </div>
-            <div style={styles.progressBar}>
+          </div>
+          <div style={styles.progressBar}>
             <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-            </div>
+          </div>
         </div>
-        )}
-        <div style={styles.content}>
-            <div style={styles.centerInfo}>
-                <img src={course.center.logo} alt={course.center.name} style={styles.logoCenter}/>
-                <span style={styles.centerName}>{course.center.name}</span>
-                </div>
-                <h3 style={styles.title}>{course.title}</h3>
-                <p style={styles.instructor}>By instr.{course.instructor}</p>
-                
-                <div style={styles.meta}>
-                    <div style={styles.rating}>
-                        <FaStar style={styles.starIcon} />
-                        <span>{course.rating}</span>
-                        <span style={styles.reviews}>({course.reviews})</span>
-                    </div>
-                    <div style={styles.duration}>
-                        <FaClock style={styles.clockIcon} />
-                        <span>{course.duration}</span>
-                    </div>
-                </div>
+      )}
 
-                <div style={styles.footer}>
-                    <p style={styles.price}>${course.price}</p>
-                   <button style={styles.enrollLink} onClick={handleEnroll}>
-                    {myCourses.includes(course.id) ? "Continue Learning" : "Enroll"}
-                    </button>
-                    </div>
-                    </div>
-                </div>        
+      <div style={styles.content}>
+        <div style={styles.topInfo}>
+          <span style={styles.category}>{category}</span>
+        </div>
 
-    )
+        <h3 style={styles.title}>{course.title}</h3>
+        <p style={styles.instructor}>By {teacherName}</p>
+
+        <p style={styles.description}>
+          {course.description?.length > 100
+            ? `${course.description.slice(0, 100)}...`
+            : course.description || "No description available."}
+        </p>
+
+        <div style={styles.meta}>
+          <div style={styles.metaItem}>
+            <FaStar style={styles.starIcon} />
+            <span>{rating}</span>
+          </div>
+
+          <div style={styles.metaItem}>
+            <FaUserGraduate style={styles.metaIcon} />
+            <span>{lessonsCount} lessons</span>
+          </div>
+
+          <div style={styles.metaItem}>
+            <FaClock style={styles.metaIcon} />
+            <span>{durationText}</span>
+          </div>
+        </div>
+
+        <div style={styles.footer}>
+          <button style={styles.button} onClick={handleEnroll}>
+            {isEnrolled ? "Continue Learning" : "View Course"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const styles = {
-    card: {
-        backgroundColor: 'white',
-        borderRadius: '15px',
-        overflow: 'hidden',
-        boxShadow: '0 5px 20px rgba(0,0,0,0.1)',
-        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-        cursor: 'pointer',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column'
-    },
-    imageContainer: {
-        position: 'relative',
-        height: '200px',
-        overflow: 'hidden'
-    },
-    image: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        transition: 'transform 0.5s ease'
-    },
-    badge: {
-        position: 'absolute',
-        top: '15px',
-        right: '15px',
-        backgroundColor: '#15BE6A',
-        color: 'white',
-        padding: '5px 12px',
-        borderRadius: '20px',
-        fontSize: '0.8rem',
-        fontWeight: '600'
-    },
-    content: {
-        padding: '1.5rem',
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column'
-    },
-    centerInfo: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        marginBottom: '1rem'
-    },
-    logoCenter: {
-        width: '25px',
-        height: '25px',
-        borderRadius: '5px'
-    },
-    centerName: {
-        fontSize: '0.9rem',
-        color: '#666'
-    },
-    title: {
-        fontSize: '1.2rem',
-        fontWeight: '600',
-        marginBottom: '0.5rem',
-        color: '#333',
-        lineHeight: '1.4'
-    },
-    instructor: {
-        fontSize: '0.9rem',
-        color: '#888',
-        marginBottom: '1rem'
-    },
-    meta: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '1.5rem'
-    },
-    rating: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.3rem'
-    },
-    starIcon: {
-        color: '#FFD700',
-        fontSize: '1rem'
-    },
-    reviews: {
-        color: '#999',
-        fontSize: '0.8rem'
-    },
-    duration: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.3rem',
-        color: '#666',
-        fontSize: '0.9rem'
-    },
-    clockIcon: {
-        color: '#15BE6A',
-        fontSize: '0.9rem'
-    },
-    footer: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 'auto',
-        borderTop: '1px solid #f0f0f0',
-        paddingTop: '1rem'
-    },
-    price: {
-        fontSize: '1.3rem',
-        fontWeight: 'bold',
-        color: '#15BE6A'
-    },
-    enrollLink: {
-        backgroundColor: 'transparent',
-        color: '#15BE6A',
-        border: '2px solid #15BE6A',
-        padding: '8px 16px',
-        borderRadius: '25px',
-        fontSize: '0.9rem',
-        fontWeight: '600',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease'
-    }
-}
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: "16px",
+    overflow: "hidden",
+    boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+    transition: "0.3s ease",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+  },
+  imageContainer: {
+    position: "relative",
+    height: "220px",
+    overflow: "hidden",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+  badge: {
+    position: "absolute",
+    top: "14px",
+    right: "14px",
+    backgroundColor: "#15BE6A",
+    color: "#fff",
+    padding: "6px 12px",
+    borderRadius: "20px",
+    fontSize: "0.8rem",
+    fontWeight: "600",
+    textTransform: "capitalize",
+  },
+  progressContainer: {
+    padding: "0.8rem 1rem 0 1rem",
+  },
+  progressHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: "6px",
+  },
+  progressLabel: {
+    fontSize: "0.85rem",
+    color: "#666",
+  },
+  progressBar: {
+    width: "100%",
+    height: "8px",
+    backgroundColor: "#eee",
+    borderRadius: "10px",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#15BE6A",
+    borderRadius: "10px",
+  },
+  content: {
+    padding: "1.2rem",
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+  },
+  topInfo: {
+    marginBottom: "0.7rem",
+  },
+  category: {
+    backgroundColor: "#f3f4f6",
+    color: "#444",
+    padding: "5px 10px",
+    borderRadius: "12px",
+    fontSize: "0.8rem",
+    fontWeight: "500",
+    textTransform: "capitalize",
+  },
+  title: {
+    fontSize: "1.15rem",
+    fontWeight: "700",
+    color: "#222",
+    marginBottom: "0.5rem",
+    lineHeight: "1.4",
+  },
+  instructor: {
+    fontSize: "0.92rem",
+    color: "#666",
+    marginBottom: "0.8rem",
+  },
+  description: {
+    fontSize: "0.9rem",
+    color: "#777",
+    lineHeight: "1.5",
+    marginBottom: "1rem",
+    minHeight: "44px",
+  },
+  meta: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "0.8rem",
+    marginBottom: "1.2rem",
+  },
+  metaItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.35rem",
+    fontSize: "0.9rem",
+    color: "#555",
+  },
+  starIcon: {
+    color: "#f5b301",
+  },
+  metaIcon: {
+    color: "#15BE6A",
+  },
+  footer: {
+    marginTop: "auto",
+  },
+  button: {
+    width: "100%",
+    border: "none",
+    backgroundColor: "#15BE6A",
+    color: "#fff",
+    padding: "12px",
+    borderRadius: "10px",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+};

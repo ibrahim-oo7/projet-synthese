@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { updateUser } from "../../features/auth/authSlice";
-import { setEnrollments } from "../../features/enrollments/enrollmentSlice";
 import {
   FaEnvelope,
   FaCalendarAlt,
@@ -15,11 +12,11 @@ import {
   FaCamera,
   FaUserCircle,
   FaCheckCircle,
-  FaSpinner
+  FaSpinner,
 } from "react-icons/fa";
-import { courses } from "../../data/courses";
 import axios from "axios";
 import CourseCard from "../../components/CourseCard";
+import { courses } from "../../data/courses";
 
 const styles = {
   container: {
@@ -27,29 +24,29 @@ const styles = {
     margin: "0 auto",
     padding: "40px 20px",
     backgroundColor: "#f8f9fa",
-    minHeight: "100vh"
+    minHeight: "100vh",
   },
   profileCard: {
     backgroundColor: "#fff",
     borderRadius: "20px",
     overflow: "hidden",
     boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-    marginBottom: "30px"
+    marginBottom: "30px",
   },
   coverPhoto: {
     height: "200px",
     background: "linear-gradient(135deg, #15BE6A, #0e8a4c)",
-    position: "relative"
+    position: "relative",
   },
   profileHeader: {
     padding: "0 30px 30px",
-    position: "relative"
+    position: "relative",
   },
   avatarContainer: {
     position: "relative",
     marginTop: "-75px",
     marginBottom: "20px",
-    display: "inline-block"
+    display: "inline-block",
   },
   avatar: {
     width: "150px",
@@ -58,7 +55,7 @@ const styles = {
     border: "5px solid #fff",
     boxShadow: "0 5px 15px rgba(0,0,0,0.2)",
     objectFit: "cover",
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
   },
   avatarPlaceholder: {
     width: "150px",
@@ -71,7 +68,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontSize: "60px",
-    color: "#fff"
+    color: "#fff",
   },
   editAvatarBtn: {
     position: "absolute",
@@ -87,24 +84,23 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    transition: "all 0.3s ease",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.2)"
+    boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
   },
   profileInfo: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
     flexWrap: "wrap",
-    gap: "20px"
+    gap: "20px",
   },
   infoSection: {
-    flex: 1
+    flex: 1,
   },
   name: {
     fontSize: "28px",
     fontWeight: "bold",
     color: "#1a1a2e",
-    marginBottom: "8px"
+    marginBottom: "8px",
   },
   email: {
     fontSize: "16px",
@@ -112,14 +108,14 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    marginBottom: "12px"
+    marginBottom: "12px",
   },
   memberSince: {
     fontSize: "14px",
     color: "#6c757d",
     display: "flex",
     alignItems: "center",
-    gap: "8px"
+    gap: "8px",
   },
   editButton: {
     backgroundColor: "transparent",
@@ -130,26 +126,25 @@ const styles = {
     fontSize: "14px",
     fontWeight: "600",
     cursor: "pointer",
-    transition: "all 0.3s ease",
     display: "flex",
     alignItems: "center",
-    gap: "8px"
+    gap: "8px",
   },
   editForm: {
     marginTop: "20px",
     padding: "20px",
     backgroundColor: "#f8f9fa",
-    borderRadius: "12px"
+    borderRadius: "12px",
   },
   formGroup: {
-    marginBottom: "20px"
+    marginBottom: "20px",
   },
   label: {
     display: "block",
     fontSize: "14px",
     fontWeight: "500",
     color: "#495057",
-    marginBottom: "8px"
+    marginBottom: "8px",
   },
   input: {
     width: "100%",
@@ -157,12 +152,11 @@ const styles = {
     border: "1px solid #dee2e6",
     borderRadius: "8px",
     fontSize: "14px",
-    transition: "all 0.3s ease"
   },
   formActions: {
     display: "flex",
     gap: "12px",
-    marginTop: "20px"
+    marginTop: "20px",
   },
   saveButton: {
     backgroundColor: "#15BE6A",
@@ -175,7 +169,7 @@ const styles = {
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
-    gap: "8px"
+    gap: "8px",
   },
   cancelButton: {
     backgroundColor: "#e9ecef",
@@ -188,13 +182,13 @@ const styles = {
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
-    gap: "8px"
+    gap: "8px",
   },
   statsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
     gap: "20px",
-    marginBottom: "30px"
+    marginBottom: "30px",
   },
   statCard: {
     backgroundColor: "#fff",
@@ -203,7 +197,7 @@ const styles = {
     boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
     display: "flex",
     alignItems: "center",
-    gap: "15px"
+    gap: "15px",
   },
   statIcon: {
     width: "50px",
@@ -214,27 +208,27 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontSize: "24px",
-    color: "#15BE6A"
+    color: "#15BE6A",
   },
   statInfo: {
-    flex: 1
+    flex: 1,
   },
   statValue: {
     fontSize: "24px",
     fontWeight: "bold",
     color: "#1a1a2e",
-    marginBottom: "4px"
+    marginBottom: "4px",
   },
   statLabel: {
     fontSize: "14px",
-    color: "#6c757d"
+    color: "#6c757d",
   },
   section: {
     backgroundColor: "#fff",
     borderRadius: "15px",
     padding: "24px",
     marginBottom: "30px",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
+    boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
   },
   sectionTitle: {
     fontSize: "20px",
@@ -245,17 +239,17 @@ const styles = {
     alignItems: "center",
     gap: "10px",
     paddingBottom: "12px",
-    borderBottom: "2px solid #f0f0f0"
+    borderBottom: "2px solid #f0f0f0",
   },
   courseGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-    gap: "24px"
+    gap: "24px",
   },
   certificateList: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-    gap: "16px"
+    gap: "16px",
   },
   certificateItem: {
     display: "flex",
@@ -263,7 +257,7 @@ const styles = {
     gap: "15px",
     padding: "16px",
     backgroundColor: "#f8f9fa",
-    borderRadius: "12px"
+    borderRadius: "12px",
   },
   certificateIcon: {
     width: "48px",
@@ -274,20 +268,20 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontSize: "24px",
-    color: "#fff"
+    color: "#fff",
   },
   certificateInfo: {
-    flex: 1
+    flex: 1,
   },
   certificateTitle: {
     fontSize: "14px",
     fontWeight: "600",
     color: "#1a1a2e",
-    marginBottom: "4px"
+    marginBottom: "4px",
   },
   certificateDate: {
     fontSize: "12px",
-    color: "#6c757d"
+    color: "#6c757d",
   },
   loadingContainer: {
     display: "flex",
@@ -295,12 +289,12 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: "100vh",
-    gap: "16px"
+    gap: "16px",
   },
   spinner: {
     animation: "spin 1s linear infinite",
     fontSize: "48px",
-    color: "#15BE6A"
+    color: "#15BE6A",
   },
   shareButton: {
     backgroundColor: "#0d6efd",
@@ -313,36 +307,32 @@ const styles = {
 };
 
 export default function Profile() {
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
-  const myCoursesIds = useSelector((state) => state.enrollments.myCourses);
-
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
+  const [user, setUser] = useState(null);
+  const [myCoursesIds, setMyCoursesIds] = useState([]);
+  const [coursesProgress, setCoursesProgress] = useState({});
+  const [certificates, setCertificates] = useState([]);
   const [copiedLink, setCopiedLink] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [profileImage, setProfileImage] = useState(null);
+
   const [editedUser, setEditedUser] = useState({
     name: "",
     email: "",
-    username: ""
+    username: "",
   });
-  const [loading, setLoading] = useState(true);
-  const [coursesProgress, setCoursesProgress] = useState({});
-  const [certificates, setCertificates] = useState([]);
 
-  const token = localStorage.getItem("token");
-
-  // ✅ enrolled courses من Redux
   const enrolledCourses = courses.filter((course) =>
     myCoursesIds.includes(Number(course.id))
   );
 
-  // ✅ current = progress < 100
   const currentCourses = enrolledCourses.filter(
     (course) => Number(coursesProgress[course.id] || 0) < 100
   );
 
-  // ✅ completed = progress === 100
   const completedCourses = enrolledCourses.filter(
     (course) => Number(coursesProgress[course.id] || 0) === 100
   );
@@ -354,139 +344,177 @@ export default function Profile() {
     totalHours: enrolledCourses.reduce(
       (total, course) => total + (parseInt(course.duration) || 5),
       0
-    )
+    ),
   };
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!token) {
       window.scrollTo(0, 0);
       navigate("/login");
       return;
     }
-    if (user) {
-      setEditedUser({
-        name: user.name || "",
-        email: user.email || "",
-        username: user.username || user.name || ""
-      });
-    }
-  }, [isAuthenticated, navigate, user]);
 
-  useEffect(() => {
-    const fetchEnrollments = async () => {
-      if (!user?.id || !token) {
-        dispatch(setEnrollments([]));
-        return;
-      }
-      try {
-        const res = await axios.get("http://127.0.0.1:8000/api/my-enrollments", {
-          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-        });
-        const enrolledCourseIds = res.data.map((e) => Number(e.course_id));
-        dispatch(setEnrollments(enrolledCourseIds));
-      } catch (error) {
-        console.log("Error fetching enrollments:", error.response?.data || error.message);
-      }
-    };
-    fetchEnrollments();
-  }, [user?.id]);
+    fetchAllProfileData();
+  }, []);
 
-  useEffect(() => {
-    const fetchProgress = async () => {
-      if (!user?.id || !token) return;
-      try {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/progress/${user.id}`,
-          { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
-        );
-        const formattedProgress = {};
-        res.data.forEach((item) => {
-          formattedProgress[Number(item.course_id)] = Number(item.percentage);
-        });
-        setCoursesProgress(formattedProgress);
-      } catch (error) {
-        console.log("Error fetching progress:", error.response?.data || error.message);
-      }
-    };
-    fetchProgress();
-  }, [user?.id]);
-
-  useEffect(() => {
-    const fetchCertificates = async () => {
-      if (!user?.id || !token) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const res = await axios.get("http://127.0.0.1:8000/api/my-certificates", {
-          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-        });
-        setCertificates(res.data || []);
-      } catch (error) {
-        console.log("Error fetching certificates:", error.response?.data || error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCertificates();
-  }, [user?.id]);
-
-  const handleEdit = () => setIsEditing(true);
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedUser({ name: user?.name || "", email: user?.email || "", username: user?.username || user?.name || "" });
+  const authHeaders = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json",
   };
 
+  const fetchAllProfileData = async () => {
+    try {
+      setLoading(true);
 
-const [avatar, setAvatar] = useState(null);
-const handleSave = async () => {
-  const token = localStorage.getItem("token");
+      const profileRes = await axios.get(
+        "http://127.0.0.1:8001/api/student/profile",
+        { headers: authHeaders }
+      );
 
-  try {
-    const formData = new FormData();
-    formData.append("name", editedUser.name);
-    formData.append("email", editedUser.email);
+      const freshUser = profileRes.data;
+      setUser(freshUser);
+      localStorage.setItem("user", JSON.stringify(freshUser));
 
-    if (avatar) {
-      formData.append("avatar", avatar);
-    }
+      setEditedUser({
+        name: freshUser.name || "",
+        email: freshUser.email || "",
+        username: freshUser.username || freshUser.name || "",
+      });
 
-    const response = await axios.post(
-      "http://127.0.0.1:8000/api/update-profile?_method=PUT",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "multipart/form-data",
-        },
+      if (freshUser?.id) {
+        try {
+          const enrollmentsRes = await axios.get(
+            "http://127.0.0.1:8001/api/my-enrollments",
+            { headers: authHeaders }
+          );
+          const enrolledCourseIds = enrollmentsRes.data.map((e) =>
+            Number(e.course_id)
+          );
+          setMyCoursesIds(enrolledCourseIds);
+        } catch (error) {
+          console.log(
+            "Error fetching enrollments:",
+            error.response?.data || error.message
+          );
+        }
+
+        try {
+          const progressRes = await axios.get(
+            `http://127.0.0.1:8001/api/progress/${freshUser.id}`,
+            { headers: authHeaders }
+          );
+
+          const formattedProgress = {};
+          progressRes.data.forEach((item) => {
+            formattedProgress[Number(item.course_id)] = Number(item.percentage);
+          });
+          setCoursesProgress(formattedProgress);
+        } catch (error) {
+          console.log(
+            "Error fetching progress:",
+            error.response?.data || error.message
+          );
+        }
+
+        try {
+          const certificatesRes = await axios.get(
+            "http://127.0.0.1:8001/api/my-certificates",
+            { headers: authHeaders }
+          );
+          setCertificates(certificatesRes.data || []);
+        } catch (error) {
+          console.log(
+            "Error fetching certificates:",
+            error.response?.data || error.message
+          );
+        }
       }
-    );
+    } catch (error) {
+      console.log(
+        "Error fetching profile:",
+        error.response?.data || error.message
+      );
+      navigate("/login");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const updatedUser = response.data.user;
+  const handleEdit = () => setIsEditing(true);
 
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    dispatch(updateUser(updatedUser));
+  const handleCancel = () => {
     setIsEditing(false);
-    setAvatar(null);
-
-  } catch (error) {
-    console.log(error.response?.data || error.message);
-    alert("Failed to update profile");
-  }
-};
+    setProfileImage(null);
+    setEditedUser({
+      name: user?.name || "",
+      email: user?.email || "",
+      username: user?.username || user?.name || "",
+    });
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setEditedUser((prev) => ({ ...prev, [name]: value }));
   };
+
+  const handleSave = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("name", editedUser.name || "");
+      formData.append("email", editedUser.email || "");
+
+      if (profileImage) {
+        formData.append("profile_image", profileImage);
+      }
+
+      await axios.post(
+        "http://127.0.0.1:8001/api/student/update-profile?_method=PUT",
+        formData,
+        {
+          headers: {
+            ...authHeaders,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const profileRes = await axios.get(
+        "http://127.0.0.1:8001/api/student/profile",
+        { headers: authHeaders }
+      );
+
+      const updatedUser = profileRes.data;
+
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      setEditedUser({
+        name: updatedUser.name || "",
+        email: updatedUser.email || "",
+        username: updatedUser.username || updatedUser.name || "",
+      });
+
+      setProfileImage(null);
+      setIsEditing(false);
+    } catch (error) {
+      console.log("Profile update error:", error.response?.data || error.message);
+      alert(
+        error.response?.data?.message ||
+          "Failed to update profile"
+      );
+    }
+  };
+
   const getMemberSince = () => {
     if (!user) return "N/A";
     const users = JSON.parse(localStorage.getItem("users")) || [];
     const userData = users.find((u) => u.email === user.email);
-    if (userData?.registeredAt) return new Date(userData.registeredAt).toLocaleDateString();
+    if (userData?.registeredAt) {
+      return new Date(userData.registeredAt).toLocaleDateString();
+    }
     return "January 2024";
   };
+
   const handleShare = () => {
     const username = user?.username || user?.name || "student";
     const link = `${window.location.origin}/profile/${username.toLowerCase()}`;
@@ -499,81 +527,130 @@ const handleSave = async () => {
       <div style={styles.loadingContainer}>
         <FaSpinner style={styles.spinner} />
         <p style={{ color: "#6c757d" }}>Loading profile...</p>
-        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        <style>
+          {`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}
+        </style>
       </div>
     );
   }
 
   return (
     <div style={styles.container}>
-      {/* Profile Card — ماتبدلش */}
       <div style={styles.profileCard}>
         <div style={styles.coverPhoto}></div>
+
         <div style={styles.profileHeader}>
           <div style={styles.avatarContainer}>
-              <input
-            id="avatarInput"
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={(e) => setAvatar(e.target.files[0])}
+            <input
+              id="avatarInput"
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => setProfileImage(e.target.files[0])}
             />
-           {avatar ? (
+
+            {profileImage ? (
               <img
-                src={URL.createObjectURL(avatar)}
+                src={URL.createObjectURL(profileImage)}
                 alt="preview"
                 style={styles.avatar}
               />
-            ) : user?.avatar ? (
-              <img src={user.avatar} alt={user.name} style={styles.avatar} />
+            ) : user?.profile_image ? (
+              <img
+                src={user.profile_image}
+                alt={user.name}
+                style={styles.avatar}
+                onError={() =>
+                  console.log("Image failed to load:", user.profile_image)
+                }
+              />
             ) : (
               <div style={styles.avatarPlaceholder}>
                 <FaUserCircle />
               </div>
             )}
-           <button
-            type="button"
-            style={styles.editAvatarBtn}
-            onClick={() => document.getElementById("avatarInput").click()}
+
+            <button
+              type="button"
+              style={styles.editAvatarBtn}
+              onClick={() => document.getElementById("avatarInput").click()}
             >
-            <FaCamera />
-          </button>
+              <FaCamera />
+            </button>
           </div>
 
           <div style={styles.profileInfo}>
             <div style={styles.infoSection}>
               {!isEditing ? (
                 <>
-                  <h1 style={styles.name}>{user?.name || user?.username || "Student"}</h1>
-                  <div style={styles.email}><FaEnvelope />{user?.email}</div>
-                  <div style={styles.memberSince}><FaCalendarAlt />Member since {getMemberSince()}</div>
+                  <h1 style={styles.name}>
+                    {user?.name || user?.username || "Student"}
+                  </h1>
+                  <div style={styles.email}>
+                    <FaEnvelope />
+                    {user?.email}
+                  </div>
+                  <div style={styles.memberSince}>
+                    <FaCalendarAlt />
+                    Member since {getMemberSince()}
+                  </div>
                 </>
               ) : (
                 <div style={styles.editForm}>
                   <div style={styles.formGroup}>
                     <label style={styles.label}>Full Name</label>
-                    <input type="text" name="name" value={editedUser.name} onChange={handleInputChange} style={styles.input} />
+                    <input
+                      type="text"
+                      name="name"
+                      value={editedUser.name}
+                      onChange={handleInputChange}
+                      style={styles.input}
+                    />
                   </div>
+
                   <div style={styles.formGroup}>
                     <label style={styles.label}>Username</label>
-                    <input type="text" name="username" value={editedUser.username} onChange={handleInputChange} style={styles.input} />
+                    <input
+                      type="text"
+                      name="username"
+                      value={editedUser.username}
+                      onChange={handleInputChange}
+                      style={styles.input}
+                    />
                   </div>
+
                   <div style={styles.formGroup}>
                     <label style={styles.label}>Email</label>
-                    <input type="email" name="email" value={editedUser.email} onChange={handleInputChange} style={styles.input} />
+                    <input
+                      type="email"
+                      name="email"
+                      value={editedUser.email}
+                      onChange={handleInputChange}
+                      style={styles.input}
+                    />
                   </div>
+
                   <div style={styles.formActions}>
-                    <button onClick={handleSave} style={styles.saveButton}><FaSave /> Save Changes</button>
-                    <button onClick={handleCancel} style={styles.cancelButton}><FaTimes /> Cancel</button>
+                    <button onClick={handleSave} style={styles.saveButton}>
+                      <FaSave /> Save Changes
+                    </button>
+                    <button onClick={handleCancel} style={styles.cancelButton}>
+                      <FaTimes /> Cancel
+                    </button>
                   </div>
                 </div>
               )}
             </div>
+
             <div style={{ display: "flex", gap: "10px" }}>
               {!isEditing && (
                 <>
-                  <button onClick={handleEdit} style={styles.editButton}><FaEdit /> Edit Profile</button>
-                  <button onClick={handleShare} style={styles.shareButton}>🔗 Share Profile</button>
+                  <button onClick={handleEdit} style={styles.editButton}>
+                    <FaEdit /> Edit Profile
+                  </button>
+                  <button onClick={handleShare} style={styles.shareButton}>
+                    🔗 Share Profile
+                  </button>
                 </>
               )}
             </div>
@@ -581,31 +658,55 @@ const handleSave = async () => {
         </div>
       </div>
 
-      {/* ✅ Stats — dynamic */}
+      {copiedLink && (
+        <div
+          style={{
+            background: "#d1e7dd",
+            color: "#0f5132",
+            padding: "10px 14px",
+            borderRadius: "8px",
+            marginBottom: "20px",
+          }}
+        >
+          Link copied: {copiedLink}
+        </div>
+      )}
+
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
-          <div style={styles.statIcon}><FaBookOpen /></div>
+          <div style={styles.statIcon}>
+            <FaBookOpen />
+          </div>
           <div style={styles.statInfo}>
             <div style={styles.statValue}>{stats.currentCourses}</div>
             <div style={styles.statLabel}>Current Courses</div>
           </div>
         </div>
+
         <div style={styles.statCard}>
-          <div style={styles.statIcon}><FaCheckCircle /></div>
+          <div style={styles.statIcon}>
+            <FaCheckCircle />
+          </div>
           <div style={styles.statInfo}>
             <div style={styles.statValue}>{stats.completedCourses}</div>
             <div style={styles.statLabel}>Completed Courses</div>
           </div>
         </div>
+
         <div style={styles.statCard}>
-          <div style={styles.statIcon}><FaCertificate /></div>
+          <div style={styles.statIcon}>
+            <FaCertificate />
+          </div>
           <div style={styles.statInfo}>
             <div style={styles.statValue}>{stats.certificates}</div>
             <div style={styles.statLabel}>Certificates Earned</div>
           </div>
         </div>
+
         <div style={styles.statCard}>
-          <div style={styles.statIcon}><FaClock /></div>
+          <div style={styles.statIcon}>
+            <FaClock />
+          </div>
           <div style={styles.statInfo}>
             <div style={styles.statValue}>{stats.totalHours}</div>
             <div style={styles.statLabel}>Hours Learned</div>
@@ -613,7 +714,6 @@ const handleSave = async () => {
         </div>
       </div>
 
-      {/* ✅ Current Courses — dynamic */}
       {currentCourses.length > 0 && (
         <div style={styles.section}>
           <div style={styles.sectionTitle}>
@@ -632,7 +732,6 @@ const handleSave = async () => {
         </div>
       )}
 
-      {/* ✅ Certificates — dynamic */}
       {certificates.length > 0 && (
         <div style={styles.section}>
           <div style={styles.sectionTitle}>
@@ -642,15 +741,21 @@ const handleSave = async () => {
           <div style={styles.certificateList}>
             {certificates.map((cert) => {
               const courseTitle =
-                courses.find((course) => course.id === Number(cert.course_id))?.title ||
-                `Course #${cert.course_id}`;
+                courses.find((course) => course.id === Number(cert.course_id))
+                  ?.title || `Course #${cert.course_id}`;
+
               return (
                 <div
                   key={cert.id}
                   style={{ ...styles.certificateItem, cursor: "pointer" }}
-                  onClick={() => { window.scrollTo(0, 0); navigate(`/certificate/${cert.course_id}`); }}
+                  onClick={() => {
+                    window.scrollTo(0, 0);
+                    navigate(`/certificate/${cert.course_id}`);
+                  }}
                 >
-                  <div style={styles.certificateIcon}><FaCertificate /></div>
+                  <div style={styles.certificateIcon}>
+                    <FaCertificate />
+                  </div>
                   <div style={styles.certificateInfo}>
                     <div style={styles.certificateTitle}>{courseTitle}</div>
                     <div style={styles.certificateDate}>
@@ -664,7 +769,6 @@ const handleSave = async () => {
         </div>
       )}
 
-      {/* ✅ Completed Courses — dynamic */}
       {completedCourses.length > 0 && (
         <div style={styles.section}>
           <div style={styles.sectionTitle}>

@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { courses } from "../../data/courses";
 import axios from "axios";
 import {
   FaStar,
@@ -10,18 +9,40 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { useMemo, useState, useEffect } from "react";
+import { fetchCourseById, normalizeCourse } from "../../services/courseApi";
 
 export default function CourseDetails() {
   const user = JSON.parse(localStorage.getItem("user"));
   const { id } = useParams();
   const navigate = useNavigate();
-  const course = courses.find((c) => c.id === parseInt(id));
-
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [video, setVideo] = useState("");
   const [videoKey, setVideoKey] = useState(0);
   const [activeLesson, setActiveLesson] = useState(null);
   const [completedLessons, setCompletedLessons] = useState([]);
   const [unlockedLessons, setUnlockedLessons] = useState(["0-0"]);
+
+  useEffect(() => {
+    const loadCourse = async () => {
+      try {
+        const data = await fetchCourseById(id);
+        const normalized = normalizeCourse(data);
+
+        if ((!normalized.modules || normalized.modules.length === 0) && Array.isArray(normalized.lessons)) {
+          normalized.modules = [{ title: "Module 1", lessons: normalized.lessons }];
+        }
+
+        setCourse(normalized);
+      } catch (error) {
+        console.log("LOAD COURSE ERROR:", error.response?.data || error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCourse();
+  }, [id]);
 
   const getTotalLessons = (course) => {
     return course.modules.reduce((total, module) => {
@@ -86,7 +107,7 @@ export default function CourseDetails() {
       }
     };
     fetchProgress();
-  }, []);
+  }, [user?.id, course?.id]);
 
   const allLessons = course
     ? course.modules.flatMap((module, moduleIndex) =>
@@ -108,6 +129,10 @@ export default function CourseDetails() {
   }, [course]);
 
   const isQuizEnabled = completedLessons.length === totalLessons;
+
+  if (loading) {
+    return <h2 style={{ textAlign: "center", marginTop: "3rem" }}>Loading course...</h2>;
+  }
 
   if (!course) {
     return (

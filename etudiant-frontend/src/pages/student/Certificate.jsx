@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
  import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-
+import { fetchCourseById, normalizeCourse } from "../../services/courseApi";
 import axios from "axios";
 import {
   FaCertificate,
@@ -386,7 +386,8 @@ const styles = {
 
 export default function Certificate() {
   const { courseId } = useParams();
-  const { user } = useSelector((state) => state.auth);
+  const authUser = useSelector((state) => state.auth?.user);
+  const user = authUser || JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
   const certificateRef = useRef(null);
 
@@ -407,101 +408,168 @@ export default function Certificate() {
     centerName: "FormInnova Learning Center",
     centerLocation: "Online / Worldwide"
   });
+useEffect(() => {
+  const fetchCertificate = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
 
-  useEffect(() => {
-    const fetchCertificate = async () => {
-      if (!user) {
-        navigate("/login");
-        return;
-      }
+    const token = localStorage.getItem("token");
 
-      const token = localStorage.getItem("token");
+    try {
+      setLoading(true);
+
+      const certificateResponse = await axios.get(
+        `http://127.0.0.1:8000/api/certificates/${courseId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const cert = certificateResponse.data?.data || certificateResponse.data || {};
+      console.log("CERTIFICATE RESPONSE:", cert);
+
+      let rawCourse = null;
+      let normalizedCourse = null;
 
       try {
-        setLoading(true);
+        const courseResponse = await fetchCourseById(courseId);
+        console.log("RAW COURSE RESPONSE:", courseResponse);
 
-        const response = await axios.get(
-          `http://127.0.0.1:8000/api/certificates/${courseId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
-        );
+        rawCourse =
+          courseResponse?.data?.course ||
+          courseResponse?.data ||
+          courseResponse?.course ||
+          courseResponse ||
+          {};
 
-        const data = response.data;
-
-        setCertificateData({
-          studentName: data.student_name || "Student",
-          courseName: data.course_name || "Course",
-          completionDate: data.issued_at || "",
-          grade: data.grade || "A",
-          score: data.score || 0,
-          certificateId: data.certificate_id || "",
-          duration: data.duration || "40 hours",
-          instructor: data.instructor || "FormInnova Team",
-          centerName: data.center_name || "FormInnova Learning Center",
-          centerLocation: data.center_location || "Online / Worldwide"
-        });
-      } catch (error) {
-        console.log(error.response?.data || error.message);
-        setErrorMessage(
-          error.response?.data?.message || "Certificate not found"
-        );
-      } finally {
-        setLoading(false);
+        normalizedCourse = normalizeCourse(rawCourse);
+        console.log("NORMALIZED COURSE:", normalizedCourse);
+      } catch (courseError) {
+        console.log("COURSE FETCH ERROR:", courseError.response?.data || courseError.message);
       }
-    };
 
-    fetchCertificate();
-  }, [courseId, user, navigate]);
+      const fallbackCourseName =
+        rawCourse?.title ||
+        rawCourse?.name ||
+        normalizedCourse?.title ||
+        cert.course?.title ||
+        cert.course?.name;
 
+      const fallbackCenterName =
+        rawCourse?.center?.name ||
+        rawCourse?.centre?.name ||
+        rawCourse?.education_center?.name ||
+        rawCourse?.educationCenter?.name ||
+        normalizedCourse?.center?.name;
 
-const handleDownload = async () => {
-  try {
-    const element = certificateRef.current;
-    if (!element) return;
+      const fallbackCenterLocation =
+        rawCourse?.center?.location ||
+        rawCourse?.centre?.location ||
+        rawCourse?.education_center?.location ||
+        rawCourse?.educationCenter?.location ||
+        normalizedCourse?.center?.location;
 
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
-      scrollX: 0,
-      scrollY: 0,
-    });
+      const courseNameFromCert =
+        cert.course_name && cert.course_name.startsWith("Course #")
+          ? fallbackCourseName
+          : cert.course_name;
 
-    const imgData = canvas.toDataURL("image/png");
+      const centerNameFromCert =
+        !cert.center_name || cert.center_name === "FormInnova"
+          ? fallbackCenterName
+          : cert.center_name;
 
-    const pdf = new jsPDF("l", "mm", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
+      setCertificateData({
+        studentName: cert.student_name || user?.name || "Student",
+        courseName: courseNameFromCert || fallbackCourseName || "Course",
+        completionDate: cert.issued_at || cert.completion_date || "",
+        grade: cert.grade || "A",
+        score: Number(cert.score || 0),
+        certificateId: cert.certificate_id || cert.id || "",
+        duration:
+          cert.duration ||
+          rawCourse?.duration ||
+          normalizedCourse?.duration ||
+          cert.course?.duration ||
+          "40 hours",
+        instructor:
+          cert.instructor ||
+          rawCourse?.teacher?.name ||
+          rawCourse?.teacher?.full_name ||
+          rawCourse?.formateur?.name ||
+          normalizedCourse?.instructor ||
+          "FormInnova Team",
+        centerName:
+          centerNameFromCert && centerNameFromCert !== "Unknown Center"
+            ? centerNameFromCert
+            : "FormInnova Learning Center",
+        centerLocation:
+          cert.center_location ||
+          fallbackCenterLocation ||
+          "Online / Worldwide",
+      });
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+      setErrorMessage(
+        error.response?.data?.message || "Certificate not found"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const margin = 8; // mm
-    const availableWidth = pdfWidth - margin * 2;
-    const availableHeight = pdfHeight - margin * 2;
+  fetchCertificate();
+}, [courseId, user, navigate]);
 
-    const ratio = Math.min(
-      availableWidth / canvas.width,
-      availableHeight / canvas.height
-    );
+  const handleDownload = async () => {
+    try {
+      const element = certificateRef.current;
+      if (!element) return;
 
-    const imgWidth = canvas.width * ratio;
-    const imgHeight = canvas.height * ratio;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+      });
 
-    const x = (pdfWidth - imgWidth) / 2;
-    const y = (pdfHeight - imgHeight) / 2;
+      const imgData = canvas.toDataURL("image/png");
 
-    pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
-    const pdfBlob = pdf.output("blob");
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    window.open(pdfUrl, "_blank");
-      } catch (error) {
-    console.error("PDF generation error:", error);
-  }
-};
+      const pdf = new jsPDF("l", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const margin = 8;
+      const availableWidth = pdfWidth - margin * 2;
+      const availableHeight = pdfHeight - margin * 2;
+
+      const ratio = Math.min(
+        availableWidth / canvas.width,
+        availableHeight / canvas.height
+      );
+
+      const imgWidth = canvas.width * ratio;
+      const imgHeight = canvas.height * ratio;
+
+      const x = (pdfWidth - imgWidth) / 2;
+      const y = (pdfHeight - imgHeight) / 2;
+
+      pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
+      const pdfBlob = pdf.output("blob");
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, "_blank");
+    } catch (error) {
+      console.error("PDF generation error:", error);
+    }
+  };
 
   const handlePrint = () => {
     window.print();
@@ -678,12 +746,6 @@ const handleDownload = async () => {
           >
             <FaShare /> Share
           </button>
-          {/* <button
-            onClick={() => navigate("/student/my-certificates")}
-            style={{ ...styles.button, ...styles.backButton }}
-          >
-            Back to Certificates
-          </button> */}
         </div>
       </div>
 
@@ -693,6 +755,7 @@ const handleDownload = async () => {
           {toastMessage}
         </div>
       )}
+  
 
       <style>{`
   @page {

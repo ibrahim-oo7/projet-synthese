@@ -50,7 +50,7 @@ export default function Enroll() {
 
       dispatch(enrollCourse({ courseId: Number(id) }));
       toast.success("Enrolled successfully!");
-      navigate("/student/dashboard");
+      navigate("/student/my-courses");
       window.scrollTo(0, 0); 
     } catch (error) {
       console.log(error.response?.data || error.message);

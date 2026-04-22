@@ -1,200 +1,233 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CourseCard from "../../components/CourseCard";
-import { courses } from "../../data/courses";
-import { FaSearch, FaCode, FaBookOpen, FaGraduationCap, FaClock, FaStar,FaBriefcase  ,FaPaintBrush,FaBullhorn, FaChartLine } from "react-icons/fa";
+import {
+  FaSearch, FaCode, FaBookOpen, FaGraduationCap,
+  FaClock, FaStar, FaBriefcase, FaPaintBrush,
+  FaBullhorn, FaChartLine
+} from "react-icons/fa";
+import { fetchAllCourses, fetchMyEnrollments, normalizeCourse } from "../../services/courseApi";
 
-export default function Courses(){
-    const [search, setSearch] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("all");
-    const [selectedLevel, setSelectedLevel] = useState("all");
-    const [sortBy, setSortBy] = useState("popular");
+export default function Courses() {
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedLevel, setSelectedLevel] = useState("all");
+  const [sortBy, setSortBy] = useState("popular");
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
 
-    // Categories for filtering
-    const categories = [
-        { id: "all", name: "All Courses", icon: <FaBookOpen /> },
-        { id: "development", name: "Development", icon: <FaCode /> },
-        { id: "design", name: "Design", icon: <FaPaintBrush /> },
-        { id: "marketing", name: "Marketing", icon: <FaBullhorn />},
-        { id: "business", name: "Business", icon: <FaBriefcase /> },
-        { id: "data-science", name: "Data Science",icon: <FaChartLine /> }
-    ];
+  const categories = [
+    { id: "all", name: "All Courses", icon: <FaBookOpen /> },
+    { id: "development", name: "Development", icon: <FaCode /> },
+    { id: "design", name: "Design", icon: <FaPaintBrush /> },
+    { id: "marketing", name: "Marketing", icon: <FaBullhorn />},
+    { id: "business", name: "Business", icon: <FaBriefcase /> },
+    { id: "data-science", name: "Data Science", icon: <FaChartLine /> }
+  ];
 
-    const levels = [
-        { id: "all", name: "All Levels" },
-        { id: "beginner", name: "Beginner" },
-        { id: "intermediate", name: "Intermediate" },
-        { id: "advanced", name: "Advanced" }
-    ];
+  const levels = [
+    { id: "all", name: "All Levels" },
+    { id: "beginner", name: "Beginner" },
+    { id: "intermediate", name: "Intermediate" },
+    { id: "advanced", name: "Advanced" }
+  ];
+useEffect(() => {
+  const loadCourses = async () => {
+    try {
+      const data = await fetchAllCourses();
+      console.log("API COURSES RESPONSE:", data);
 
-    // Filter and sort courses
-    const filtredCourses = courses
-        .filter(course => 
-            course.title.toLowerCase().includes(search.toLowerCase()) &&
-            (selectedCategory === "all" || course.category === selectedCategory) &&
-            (selectedLevel === "all" || course.level === selectedLevel)
-        )
-        .sort((a, b) => {
-            if (sortBy === "price-low") return a.price - b.price;
-            if (sortBy === "price-high") return b.price - a.price;
-            if (sortBy === "rating") return b.rating - a.rating;
-            return 0; 
-        });
+      const list =
+        Array.isArray(data) ? data :
+        Array.isArray(data.data) ? data.data :
+        Array.isArray(data.courses) ? data.courses :
+        Array.isArray(data.result) ? data.result :
+        [];
 
-    // Statistics
-    const stats = {
-        totalCourses: courses.length,
-        totalStudents: "15.2K",
-        totalCenters: 45,
-        avgRating: 4.7
-    };
+      console.log("COURSES LIST:", list);
 
-    return(
-        <div style={styles.container}>
-            {/* Header Section */}
-            <div style={styles.header}>
-                <h1 style={styles.title}>Browse <span style={styles.highlight}>Courses</span></h1>
-                <p style={styles.subtitle}>Discover thousands of courses from top education centers worldwide</p>
-                
-                {/* Stats Banner */}
-                <div style={styles.statsBanner}>
-                    <div style={styles.statItem}>
-                        <FaBookOpen style={styles.statIcon} />
-                        <div>
-                            <h3 style={styles.statNumber}>{stats.totalCourses}+</h3>
-                            <p style={styles.statLabel}>Courses</p>
-                        </div>
-                    </div>
-                    <div style={styles.statDivider}></div>
-                    <div style={styles.statItem}>
-                        <FaGraduationCap style={styles.statIcon} />
-                        <div>
-                            <h3 style={styles.statNumber}>{stats.totalStudents}</h3>
-                            <p style={styles.statLabel}>Students</p>
-                        </div>
-                    </div>
-                    <div style={styles.statDivider}></div>
-                    <div style={styles.statItem}>
-                        <FaClock style={styles.statIcon} />
-                        <div>
-                            <h3 style={styles.statNumber}>{stats.totalCenters}</h3>
-                            <p style={styles.statLabel}>Centers</p>
-                        </div>
-                    </div>
-                    <div style={styles.statDivider}></div>
-                    <div style={styles.statItem}>
-                        <FaStar style={styles.statIcon} />
-                        <div>
-                            <h3 style={styles.statNumber}>{stats.avgRating}</h3>
-                            <p style={styles.statLabel}>Avg Rating</p>
-                        </div>
-                    </div>
-                </div>
+      const normalized = list.map(normalizeCourse);
+      console.log("NORMALIZED COURSES:", normalized);
+
+      setCourses(normalized);
+    } catch (error) {
+      console.log("LOAD COURSES ERROR:", error.response?.data || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadCourses();
+}, []);
+
+useEffect(() => {
+  const loadEnrollments = async () => {
+    try {
+      const data = await fetchMyEnrollments();
+      const list =
+        Array.isArray(data) ? data :
+        Array.isArray(data.data) ? data.data :
+        Array.isArray(data.enrollments) ? data.enrollments :
+        [];
+
+      setEnrolledCourseIds(list.map((item) => Number(item.course_id || item.id)));
+    } catch (error) {
+      console.log("ENROLLMENTS ERROR:", error.response?.data || error.message);
+      setEnrolledCourseIds([]);
+    }
+  };
+
+  loadEnrollments();
+}, []);
+
+  const filteredCourses = useMemo(() => {
+    return courses
+      .filter(course =>
+        course.title.toLowerCase().includes(search.toLowerCase()) &&
+        (selectedCategory === "all" || course.category === selectedCategory) &&
+        (selectedLevel === "all" || course.level === selectedLevel)
+      )
+      .sort((a, b) => {
+        if (sortBy === "price-low") return a.price - b.price;
+        if (sortBy === "price-high") return b.price - a.price;
+        if (sortBy === "rating") return b.rating - a.rating;
+        return 0;
+      });
+  }, [courses, search, selectedCategory, selectedLevel, sortBy]);
+
+  const stats = {
+    totalCourses: courses.length,
+    totalStudents: "15.2K",
+    totalCenters: new Set(courses.map(c => c.center.name)).size,
+    avgRating: courses.length
+      ? (courses.reduce((sum, c) => sum + Number(c.rating || 0), 0) / courses.length).toFixed(1)
+      : 0
+  };
+
+  if (loading) {
+    return <h2 style={{ textAlign: "center", marginTop: "3rem" }}>Loading courses...</h2>;
+  }
+
+  return (
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <h1 style={styles.title}>Browse <span style={styles.highlight}>Courses</span></h1>
+        <p style={styles.subtitle}>Discover courses from top education centers</p>
+
+        <div style={styles.statsBanner}>
+          <div style={styles.statItem}>
+            <FaBookOpen style={styles.statIcon} />
+            <div>
+              <h3 style={styles.statNumber}>{stats.totalCourses}+</h3>
+              <p style={styles.statLabel}>Courses</p>
             </div>
+          </div>
 
-            {/* Search and Filter Section */}
-            <div style={styles.controls}>
-                <div style={styles.searchContainer}>
-                    <FaSearch style={styles.searchIcon} />
-                    <input 
-                        type="text" 
-                        placeholder="Search courses by title, instructor, or topic..." 
-                        value={search} 
-                        onChange={(e)=>setSearch(e.target.value)}
-                        style={styles.searchInput} 
-                    />
-                </div>
+          <div style={styles.statDivider}></div>
 
-                <div style={styles.filterContainer}>
-                    <div style={styles.sortWrapper}>
-                        <label style={styles.filterLabel}>Sort by:</label>
-                        <select 
-                            style={styles.select} 
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                        >
-                            <option value="popular">Most Popular</option>
-                            <option value="rating">Highest Rated</option>
-                            <option value="price-low">Price: Low to High</option>
-                            <option value="price-high">Price: High to Low</option>
-                        </select>
-                    </div>
-
-                    <div style={styles.filterWrapper}>
-                        <label style={styles.filterLabel}>Level:</label>
-                        <select 
-                            style={styles.select} 
-                            value={selectedLevel}
-                            onChange={(e) => setSelectedLevel(e.target.value)}
-                        >
-                            {levels.map(level => (
-                                <option key={level.id} value={level.id}>
-                                    {level.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
+          <div style={styles.statItem}>
+            <FaGraduationCap style={styles.statIcon} />
+            <div>
+              <h3 style={styles.statNumber}>{stats.totalStudents}</h3>
+              <p style={styles.statLabel}>Students</p>
             </div>
+          </div>
 
-            {/* Categories Tabs */}
-            <div style={styles.categories}>
-                {categories.map(category => (
-                    <button
-                        key={category.id}
-                        style={{
-                            ...styles.categoryBtn,
-                            ...(selectedCategory === category.id ? styles.categoryBtnActive : {})
-                        }}
-                        onClick={() => setSelectedCategory(category.id)}
-                    >
-                        <span style={styles.categoryIcon}>{category.icon}</span>
-                        {category.name}
-                    </button>
-                ))}
+          <div style={styles.statDivider}></div>
+
+          <div style={styles.statItem}>
+            <FaClock style={styles.statIcon} />
+            <div>
+              <h3 style={styles.statNumber}>{stats.totalCenters}</h3>
+              <p style={styles.statLabel}>Centers</p>
             </div>
+          </div>
 
-            {/* Results Info */}
-            <div style={styles.resultsInfo}>
-                <p style={styles.resultsText}>
-                    Showing <span style={styles.resultsNumber}>{filtredCourses.length}</span> courses
-                    {search && <span> for "<span style={styles.searchTerm}>{search}</span>"</span>}
-                </p>
+          <div style={styles.statDivider}></div>
+
+          <div style={styles.statItem}>
+            <FaStar style={styles.statIcon} />
+            <div>
+              <h3 style={styles.statNumber}>{stats.avgRating}</h3>
+              <p style={styles.statLabel}>Avg Rating</p>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Courses Grid */}
-            {filtredCourses.length > 0 ? (
-                <div style={styles.grid}>
-                    {filtredCourses.map(course => (
-                        <CourseCard key={course.id} course={course} />
-                    ))}
-                </div>
-            ) : (
-                <div style={styles.noResults}>
-                    <img 
-                        src="https://img.icons8.com/ios/452/search--v1.png" 
-                        alt="No results" 
-                        style={styles.noResultsImg}
-                    />
-                    <h3 style={styles.noResultsTitle}>No courses found</h3>
-                    <p style={styles.noResultsText}>
-                        Try adjusting your search or filter to find what you're looking for.
-                    </p>
-                    <button 
-                        style={styles.clearBtn}
-                        onClick={() => {
-                            setSearch("");
-                            setSelectedCategory("all");
-                            setSelectedLevel("all");
-                        }}
-                    >
-                        Clear all filters
-                    </button>
-                </div>
-            )}
+      <div style={styles.controls}>
+        <div style={styles.searchContainer}>
+          <FaSearch style={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Search courses..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
 
-            
-            </div>
-    )
+        <div style={styles.filterContainer}>
+          <div style={styles.sortWrapper}>
+            <label style={styles.filterLabel}>Sort by:</label>
+            <select style={styles.select} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="popular">Most Popular</option>
+              <option value="rating">Highest Rated</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+            </select>
+          </div>
+
+          <div style={styles.filterWrapper}>
+            <label style={styles.filterLabel}>Level:</label>
+            <select style={styles.select} value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}>
+              {levels.map(level => (
+                <option key={level.id} value={level.id}>{level.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.categories}>
+        {categories.map(category => (
+          <button
+            key={category.id}
+            style={{
+              ...styles.categoryBtn,
+              ...(selectedCategory === category.id ? styles.categoryBtnActive : {})
+            }}
+            onClick={() => setSelectedCategory(category.id)}
+          >
+            <span style={styles.categoryIcon}>{category.icon}</span>
+            {category.name}
+          </button>
+        ))}
+      </div>
+
+      <div style={styles.resultsInfo}>
+        <p style={styles.resultsText}>
+          Showing <span style={styles.resultsNumber}>{filteredCourses.length}</span> courses
+        </p>
+      </div>
+
+      {filteredCourses.length > 0 ? (
+        <div style={styles.grid}>
+          {filteredCourses.map(course => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              isEnrolled={enrolledCourseIds.includes(course.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div style={styles.noResults}>
+          <h3>No courses found</h3>
+        </div>
+      )}
+    </div>
+  );
 }
 
 const styles = {

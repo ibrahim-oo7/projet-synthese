@@ -50,46 +50,46 @@ class AuthController extends Controller
             'token' => $token,
         ]);
     }
-    public function updateProfile(Request $request)
-{
-    $student = $request->user();
+//     public function updateProfile(Request $request)
+// {
+//     $student = $request->user();
 
-    if (!$student) {
-        return response()->json([
-            "message" => "Unauthorized"
-        ], 401);
-    }
+//     if (!$student) {
+//         return response()->json([
+//             "message" => "Unauthorized"
+//         ], 401);
+//     }
 
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email,' . $student->id,
-        'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-    ]);
+//     $request->validate([
+//         'name' => 'required|string|max:255',
+//         'email' => 'required|email|unique:users,email,' . $student->id,
+//         'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+//     ]);
 
-    $student->name = $request->name;
-    $student->email = $request->email;
+//     $student->name = $request->name;
+//     $student->email = $request->email;
 
-    if ($request->hasFile('avatar')) {
-        if ($student->avatar && Storage::disk('public')->exists($student->avatar)) {
-            Storage::disk('public')->delete($student->avatar);
-        }
+//     if ($request->hasFile('avatar')) {
+//         if ($student->avatar && Storage::disk('public')->exists($student->avatar)) {
+//             Storage::disk('public')->delete($student->avatar);
+//         }
 
-        $path = $request->file('avatar')->store('avatars', 'public');
-        $student->avatar = $path;
-    }
+//         $path = $request->file('avatar')->store('avatars', 'public');
+//         $student->avatar = $path;
+//     }
 
-    $student->save();
+//     $student->save();
 
-    return response()->json([
-        "message" => "Profile updated successfully",
-        "user" => [
-            "id" => $student->id,
-            "name" => $student->name,
-            "email" => $student->email,
-            "avatar" => $student->avatar
-                ? asset('storage/' . $student->avatar)
-                : null,
-        ]
-    ]);
-}
+//     return response()->json([
+//         "message" => "Profile updated successfully",
+//         "user" => [
+//             "id" => $student->id,
+//             "name" => $student->name,
+//             "email" => $student->email,
+//             "avatar" => $student->avatar
+//                 ? asset('storage/' . $student->avatar)
+//                 : null,
+//         ]
+//     ]);
+// }
 }

@@ -1,9 +1,34 @@
 import CourseCard from "../../components/CourseCard";
 import HeroSection from "../../components/HeroSection";
-import { courses } from "../../data/courses";
+import { useEffect, useState } from "react";
+import { fetchAllCourses, normalizeCourse } from "../../services/courseApi";
 import { FaGraduationCap, FaChartLine, FaCertificate, FaUsers, FaStar, FaArrowRight } from "react-icons/fa";
 
 export default function Home(){
+     const [courses, setCourses] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const data = await fetchAllCourses();
+
+        const list =
+          Array.isArray(data) ? data :
+          Array.isArray(data.data) ? data.data :
+          Array.isArray(data.courses) ? data.courses :
+          [];
+
+        setCourses(list.map(normalizeCourse));
+      } catch (error) {
+        console.log("HOME COURSES ERROR:", error.response?.data || error.message);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    loadCourses();
+  }, []);
     return(
         <div>
             <HeroSection/>
@@ -60,21 +85,30 @@ export default function Home(){
                 </div>
             </section>
 
-            <section style={styles.popularSection}>
+           <section style={styles.popularSection}>
                 <div style={styles.container}>
                     <div style={styles.sectionHeader}>
-                        <h2 style={styles.sectionTitle}>Popular Courses</h2>
-                        <button style={styles.viewAllBtn}>
-                            View All <FaArrowRight style={styles.viewAllIcon} />
-                        </button>
+                    <h2 style={styles.sectionTitle}>Popular Courses</h2>
+                    <button style={styles.viewAllBtn}>
+                        View All <FaArrowRight style={styles.viewAllIcon} />
+                    </button>
                     </div>
+
+                    {loadingCourses ? (
+                    <h3 style={{ textAlign: "center", padding: "2rem" }}>Loading courses...</h3>
+                    ) : courses.length > 0 ? (
                     <div style={styles.coursesGrid}>
-                        {courses.map((course)=>(
-                            <CourseCard key={course.id} course={course}/>
+                        {courses.slice(0, 6).map((course) => (
+                        <CourseCard key={course.id} course={course} />
                         ))}
                     </div>
+                    ) : (
+                    <h3 style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
+                        No courses found
+                    </h3>
+                    )}
                 </div>
-            </section>
+                </section>
 
             <section style={styles.reviewsSection}>
                 <div style={styles.container}>

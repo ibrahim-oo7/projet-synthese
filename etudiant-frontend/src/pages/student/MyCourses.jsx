@@ -1,48 +1,69 @@
-import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { courses } from "../../data/courses";
 import CourseCard from "../../components/CourseCard";
-import axios from "axios";
+import {
+  fetchAllCourses,
+  fetchMyEnrollments,
+  fetchStudentProgressByUser,
+  normalizeCourse
+} from "../../services/courseApi";
 
 export default function MyCourses() {
-  const { user } = useSelector((state) => state.auth);
-  const myCoursesIds = useSelector((state) => state.enrollments.myCourses);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const [myCourses, setMyCourses] = useState([]);
   const [coursesProgress, setCoursesProgress] = useState({});
-
-  const myCourses = courses.filter(course =>
-    myCoursesIds.includes(course.id)
-  );
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProgress = async () => {
-      if (!user?.id) return;
-
-      const token = localStorage.getItem("token");
+    const loadMyCourses = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
 
       try {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/progress/${user.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
+        const [enrollmentsData, allCoursesData, progressData] = await Promise.all([
+          fetchMyEnrollments(),
+          fetchAllCourses(),
+          fetchStudentProgressByUser(user.id),
+        ]);
+
+        const enrollments = Array.isArray(enrollmentsData)
+          ? enrollmentsData
+          : enrollmentsData.enrollments || [];
+
+        const enrolledIds = enrollments.map((item) =>
+          Number(item.course_id || item.id)
+        );
+
+        const allCourses = (Array.isArray(allCoursesData)
+          ? allCoursesData
+          : allCoursesData.data || []
+        ).map(normalizeCourse);
+
+        const filteredCourses = allCourses.filter((course) =>
+          enrolledIds.includes(Number(course.id))
         );
 
         const formattedProgress = {};
-        res.data.forEach((item) => {
+        (Array.isArray(progressData) ? progressData : progressData.progress || []).forEach((item) => {
           formattedProgress[item.course_id] = item.percentage;
         });
 
+        setMyCourses(filteredCourses);
         setCoursesProgress(formattedProgress);
       } catch (error) {
         console.log(error.response?.data || error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProgress();
+    loadMyCourses();
   }, [user?.id]);
+
+  if (loading) {
+    return <h2 style={{ textAlign: "center", marginTop: "3rem" }}>Loading...</h2>;
+  }
 
   if (myCourses.length === 0) {
     return (
@@ -57,8 +78,13 @@ export default function MyCourses() {
       <h2 style={styles.title}>My Courses</h2>
 
       <div style={styles.grid}>
-        {myCourses.map(course => (
-          <CourseCard key={course.id} course={course} progress={coursesProgress[course.id] || 0} />
+        {myCourses.map((course) => (
+          <CourseCard
+            key={course.id}
+            course={course}
+            progress={coursesProgress[course.id] || 0}
+            isEnrolled={true}
+          />
         ))}
       </div>
     </div>
