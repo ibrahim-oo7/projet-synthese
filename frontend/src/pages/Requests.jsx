@@ -10,7 +10,7 @@ function Requests() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [actionLoading, setActionLoading] = useState({});
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -40,25 +40,19 @@ function Requests() {
 
   useEffect(() => {
     if (!toast.open) return;
-
     const timer = setTimeout(() => {
       closeToast();
     }, 3200);
-
     return () => clearTimeout(timer);
   }, [toast.open, closeToast]);
 
   const fetchRequests = useCallback(async (manualRefresh = false) => {
     try {
       setError("");
-      if (manualRefresh) {
-        setRefreshing(true);
-      }
-
+      if (manualRefresh) setRefreshing(true);
       const response = await api.get("/center-requests");
       setRequests(response.data || []);
     } catch (err) {
-      console.error("Requests fetch error:", err);
       setError("Failed to load requests.");
     } finally {
       setLoading(false);
@@ -77,8 +71,6 @@ function Requests() {
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (err) {
-      console.error("Logout error:", err);
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("admin");
@@ -98,13 +90,11 @@ function Requests() {
       setDetailsOpen(true);
       setDetailsLoading(true);
       setSelectedRequest(requestItem);
-
       const response = await api.get(`/center-requests/${requestItem.id}`);
       setSelectedRequest(response.data.data || response.data || requestItem);
-    } catch (err) {
-      console.error("Request details error:", err);
+    } catch {
       setSelectedRequest(requestItem);
-      showToast("error", err?.response?.data?.message || "Failed to load full request details.");
+      showToast("error", "Failed to load full request details.");
     } finally {
       setDetailsLoading(false);
     }
@@ -132,7 +122,6 @@ function Requests() {
     try {
       setRowLoading(id, true);
       const response = await api.post(`/center-requests/${id}/approve`);
-
       const generatedPassword =
         response?.data?.data?.generated_password ||
         response?.data?.generated_password;
@@ -147,17 +136,13 @@ function Requests() {
       if (generatedPassword) {
         showToast(
           "success",
-          `Request approved successfully. Generated password: ${generatedPassword}`
+          `Request approved. Password: ${generatedPassword}`
         );
       } else {
         showToast("success", "Request approved successfully.");
       }
-    } catch (err) {
-      console.error("Approve request error:", err);
-      showToast(
-        "error",
-        err?.response?.data?.message || "Failed to approve request."
-      );
+    } catch {
+      showToast("error", "Failed to approve request.");
     } finally {
       setRowLoading(id, false);
     }
@@ -185,12 +170,8 @@ function Requests() {
 
       closeRejectModal();
       showToast("success", "Request rejected successfully.");
-    } catch (err) {
-      console.error("Reject request error:", err);
-      showToast(
-        "error",
-        err?.response?.data?.message || "Failed to reject request."
-      );
+    } catch {
+      showToast("error", "Failed to reject request.");
     } finally {
       setRowLoading(rejectTargetId, false);
     }
@@ -217,7 +198,6 @@ function Requests() {
     const pending = requests.filter((r) => r.status === "pending").length;
     const accepted = requests.filter((r) => r.status === "accepted").length;
     const rejected = requests.filter((r) => r.status === "rejected").length;
-
     return { total, pending, accepted, rejected };
   }, [requests]);
 
@@ -277,7 +257,12 @@ function Requests() {
         <section className="sup-topbar-row">
           <div className="sup-page-intro">
             <h1>Requests</h1>
-            <p>Review and manage center registration requests.</p>
+            <p>
+              {statusFilter === "pending" && "Pending requests that need your action."}
+              {statusFilter === "accepted" && "Approved requests history."}
+              {statusFilter === "rejected" && "Rejected requests history."}
+              {statusFilter === "all" && "All requests overview."}
+            </p>
           </div>
 
           <div className="sup-filters">
@@ -294,10 +279,10 @@ function Requests() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
+              <option value="pending">Pending (Default)</option>
               <option value="accepted">Accepted</option>
               <option value="rejected">Rejected</option>
+              <option value="all">All</option>
             </select>
           </div>
         </section>
@@ -308,18 +293,18 @@ function Requests() {
             <h3>{stats.total}</h3>
           </div>
 
-          <div className="sup-card sup-animate-up" style={{ animationDelay: "0.06s" }}>
-            <span>Pending Requests</span>
+          <div className="sup-card sup-animate-up">
+            <span>Pending</span>
             <h3>{stats.pending}</h3>
           </div>
 
-          <div className="sup-card sup-animate-up" style={{ animationDelay: "0.12s" }}>
-            <span>Accepted Requests</span>
+          <div className="sup-card sup-animate-up">
+            <span>Accepted</span>
             <h3>{stats.accepted}</h3>
           </div>
 
-          <div className="sup-card sup-animate-up" style={{ animationDelay: "0.18s" }}>
-            <span>Rejected Requests</span>
+          <div className="sup-card sup-animate-up">
+            <span>Rejected</span>
             <h3>{stats.rejected}</h3>
           </div>
         </section>
@@ -388,7 +373,7 @@ function Requests() {
                               </button>
                             </>
                           ) : (
-                            <span className="sup-no-action">No actions available</span>
+                            <span className="sup-no-action">No actions</span>
                           )}
                         </div>
                       </td>
@@ -411,8 +396,8 @@ function Requests() {
           >
             <div className="sup-modal-head">
               <div>
-                <h3>{selectedRequest?.name || selectedRequest?.center_name || "Request Details"}</h3>
-                <p>Review the full request information before making a decision.</p>
+                <h3>{selectedRequest?.name || selectedRequest?.center_name}</h3>
+                <p>Full request details</p>
               </div>
 
               <button className="sup-modal-close" onClick={closeDetailsModal}>
@@ -421,125 +406,34 @@ function Requests() {
             </div>
 
             {detailsLoading ? (
-              <div className="sup-modal-loading">Loading request details...</div>
-            ) : selectedRequest ? (
+              <div className="sup-modal-loading">Loading...</div>
+            ) : (
               <>
-                <div className="request-modal-top">
-                  <StatusBadge status={selectedRequest.status} />
-
-                  <div className="request-modal-actions">
-                    {selectedRequest.status === "pending" && (
-                      <>
-                        <button
-                          className="sup-btn sup-btn-success"
-                          onClick={() => handleApprove(selectedRequest.id)}
-                          disabled={!!actionLoading[selectedRequest.id]}
-                        >
-                          {actionLoading[selectedRequest.id] ? "Processing..." : "Approve"}
-                        </button>
-
-                        <button
-                          className="sup-btn sup-btn-danger"
-                          onClick={() => openRejectModal(selectedRequest.id)}
-                          disabled={!!actionLoading[selectedRequest.id]}
-                        >
-                          {actionLoading[selectedRequest.id] ? "Processing..." : "Reject"}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
                 <div className="request-modal-grid">
                   <div className="request-modal-card">
-                    <span>Center Name</span>
-                    <strong>{selectedRequest.name || selectedRequest.center_name || "-"}</strong>
+                    <span>Email</span>
+                    <strong>{selectedRequest?.email}</strong>
                   </div>
 
                   <div className="request-modal-card">
-                    <span>Manager Name</span>
-                    <strong>{selectedRequest.manager_name || "-"}</strong>
-                  </div>
-
-                  <div className="request-modal-card">
-                    <span>Email Address</span>
-                    <strong>{selectedRequest.email || "-"}</strong>
-                  </div>
-
-                  <div className="request-modal-card">
-                    <span>Phone Number</span>
-                    <strong>{selectedRequest.phone || "-"}</strong>
+                    <span>Phone</span>
+                    <strong>{selectedRequest?.phone}</strong>
                   </div>
 
                   <div className="request-modal-card">
                     <span>City</span>
-                    <strong>{selectedRequest.city || "-"}</strong>
-                  </div>
-
-                  <div className="request-modal-card">
-                    <span>Submitted Date</span>
-                    <strong>{formatDate(selectedRequest.created_at)}</strong>
-                  </div>
-
-                  <div className="request-modal-card">
-                    <span>Reviewed Date</span>
-                    <strong>
-                      {formatDate(
-                        selectedRequest.reviewed_at ||
-                          selectedRequest.approved_at ||
-                          selectedRequest.rejected_at
-                      )}
-                    </strong>
+                    <strong>{selectedRequest?.city}</strong>
                   </div>
 
                   <div className="request-modal-card">
                     <span>Status</span>
-                    <strong>{selectedRequest.status || "-"}</strong>
+                    <strong>{selectedRequest?.status}</strong>
                   </div>
 
                   <div className="request-modal-card request-modal-card-full">
-                    <span>Full Address</span>
-                    <strong>{selectedRequest.address || "No address provided."}</strong>
+                    <span>Message</span>
+                    <strong>{selectedRequest?.message}</strong>
                   </div>
-
-                  <div className="request-modal-card request-modal-card-full">
-                    <span>Complete Message</span>
-                    <strong>{selectedRequest.message || "No message provided."}</strong>
-                  </div>
-                </div>
-
-                <div className="request-history-box">
-                  <h4>Admin Action History</h4>
-
-                  <div className="request-history-list-modal">
-                    <div className="request-history-item-modal">
-                      <span>Request Submitted</span>
-                      <strong>{formatDate(selectedRequest.created_at)}</strong>
-                    </div>
-
-                    <div className="request-history-item-modal">
-                      <span>Reviewed Date</span>
-                      <strong>
-                        {formatDate(
-                          selectedRequest.reviewed_at ||
-                            selectedRequest.approved_at ||
-                            selectedRequest.rejected_at
-                        )}
-                      </strong>
-                    </div>
-
-                    <div className="request-history-item-modal">
-                      <span>Current Status</span>
-                      <strong>{selectedRequest.status || "-"}</strong>
-                    </div>
-                  </div>
-
-                  {selectedRequest.reject_reason && (
-                    <div className="request-reject-reason-box">
-                      <span>Reject Reason</span>
-                      <p>{selectedRequest.reject_reason}</p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="sup-modal-footer">
@@ -548,8 +442,6 @@ function Requests() {
                   </button>
                 </div>
               </>
-            ) : (
-              <div className="sup-modal-loading">No request data found.</div>
             )}
           </div>
         </div>
@@ -564,7 +456,6 @@ function Requests() {
             <div className="sup-modal-head">
               <div>
                 <h3>Reject Request</h3>
-                <p>Please write the reason for rejecting this request.</p>
               </div>
 
               <button className="sup-modal-close" onClick={closeRejectModal}>
@@ -573,13 +464,11 @@ function Requests() {
             </div>
 
             <div className="reject-reason-body">
-              <label className="reject-reason-label">Reject Reason</label>
               <textarea
                 className="reject-reason-textarea"
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Write the rejection reason here..."
-                rows={5}
+                placeholder="Write reason..."
               />
             </div>
 
@@ -593,7 +482,7 @@ function Requests() {
                 onClick={handleConfirmReject}
                 disabled={!!actionLoading[rejectTargetId]}
               >
-                {actionLoading[rejectTargetId] ? "Processing..." : "Confirm Reject"}
+                {actionLoading[rejectTargetId] ? "Processing..." : "Confirm"}
               </button>
             </div>
           </div>

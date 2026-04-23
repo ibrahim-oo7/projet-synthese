@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
+use App\Models\SuperAdmin;
+use App\Models\Center;
+use App\Notifications\SystemNotification;
 
 class PaymentController extends Controller
 {
@@ -27,7 +30,6 @@ class PaymentController extends Controller
     public function index()
     {
         $payments = $this->paymentService->getAllPayments();
-
         return response()->json($payments);
     }
 
@@ -45,6 +47,16 @@ class PaymentController extends Controller
         try {
             $payment = $this->paymentService->createPayment($validated);
 
+            $center = Center::find($validated['center_id']);
+
+            $admins = SuperAdmin::all();
+            foreach ($admins as $admin) {
+                $admin->notify(new SystemNotification(
+                    "New payment from {$center->name} ({$payment->amount} MAD)",
+                    "payment"
+                ));
+            }
+
             return response()->json([
                 'message' => 'Payment added successfully',
                 'data' => $payment,
@@ -59,7 +71,6 @@ class PaymentController extends Controller
     public function centerPayments($centerId)
     {
         $payments = $this->paymentService->getPaymentsByCenter((int) $centerId);
-
         return response()->json($payments);
     }
 }

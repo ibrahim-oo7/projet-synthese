@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\CenterService;
+use App\Models\SuperAdmin;
+use App\Notifications\SystemNotification;
 
 class CenterController extends Controller
 {
@@ -26,14 +28,12 @@ class CenterController extends Controller
     public function index()
     {
         $centers = $this->centerService->getAllCenters();
-
         return response()->json($centers);
     }
 
     public function show($id)
     {
         $center = $this->centerService->getCenterById((int) $id);
-
         return response()->json($center);
     }
 
@@ -41,6 +41,14 @@ class CenterController extends Controller
     {
         try {
             $center = $this->centerService->disableCenter((int) $id);
+
+            $admins = SuperAdmin::all();
+            foreach ($admins as $admin) {
+                $admin->notify(new SystemNotification(
+                    "Center disabled",
+                    "center"
+                ));
+            }
 
             return response()->json([
                 'message' => 'Center disabled successfully',
@@ -58,6 +66,14 @@ class CenterController extends Controller
         try {
             $center = $this->centerService->activateCenter((int) $id);
 
+            $admins = SuperAdmin::all();
+            foreach ($admins as $admin) {
+                $admin->notify(new SystemNotification(
+                    "Center activated",
+                    "center"
+                ));
+            }
+
             return response()->json([
                 'message' => 'Center activated successfully',
                 'data' => $center,
@@ -72,6 +88,14 @@ class CenterController extends Controller
     public function destroy($id)
     {
         $this->centerService->deleteCenter((int) $id);
+
+        $admins = SuperAdmin::all();
+        foreach ($admins as $admin) {
+            $admin->notify(new SystemNotification(
+                "Center deleted",
+                "center"
+            ));
+        }
 
         return response()->json([
             'message' => 'Center deleted successfully',

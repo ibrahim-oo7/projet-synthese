@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class SuperAdmin extends Authenticatable
 {
     use HasApiTokens;
+    use Notifiable;
 
     protected $fillable = [
         'email',

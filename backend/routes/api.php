@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CenterController;
 use App\Http\Controllers\PaymentController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\CenterRequestController;
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware(['auth:super_admin'])->group(function () {
+
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
@@ -36,4 +38,38 @@ Route::middleware(['auth:super_admin'])->group(function () {
 
     Route::get('/settings', [SettingsController::class, 'index']);
     Route::put('/settings', [SettingsController::class, 'update']);
+
+    Route::get('/notifications', function () {
+        return auth('super_admin')->user()
+            ->notifications()
+            ->latest()
+            ->limit(10)
+            ->get();
+    });
+
+    Route::post('/notifications/read-all', function () {
+        auth('super_admin')->user()
+            ->unreadNotifications
+            ->markAsRead();
+
+        return response()->json([
+            'message' => 'All notifications marked as read'
+        ]);
+    });
+
+    Route::post('/notifications/{id}/read', function ($id) {
+        $notification = auth('super_admin')->user()
+            ->notifications()
+            ->where('id', $id)
+            ->first();
+
+        if ($notification) {
+            $notification->markAsRead();
+        }
+
+        return response()->json([
+            'message' => 'Notification marked as read'
+        ]);
+    });
+
 });

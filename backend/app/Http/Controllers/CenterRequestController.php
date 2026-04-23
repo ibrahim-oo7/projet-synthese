@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\CenterRequest;
+use App\Models\SuperAdmin;
 use App\Services\CenterRequestService;
 use Illuminate\Http\Request;
+use App\Notifications\SystemNotification;
 
 class CenterRequestController extends Controller
 {
@@ -18,7 +20,6 @@ class CenterRequestController extends Controller
     public function index()
     {
         $requests = CenterRequest::latest()->get();
-
         return response()->json($requests);
     }
 
@@ -44,6 +45,14 @@ class CenterRequestController extends Controller
 
         $centerRequest = $this->centerRequestService->storeRequest($validated);
 
+        $admins = SuperAdmin::all();
+        foreach ($admins as $admin) {
+            $admin->notify(new SystemNotification(
+                "New center request from {$centerRequest->name}",
+                "request"
+            ));
+        }
+
         return response()->json([
             'message' => 'Center request submitted successfully',
             'data' => $centerRequest
@@ -54,6 +63,14 @@ class CenterRequestController extends Controller
     {
         try {
             $result = $this->centerRequestService->approveRequest((int) $id);
+
+            $admins = SuperAdmin::all();
+            foreach ($admins as $admin) {
+                $admin->notify(new SystemNotification(
+                    "Request approved for {$result->name}",
+                    "request"
+                ));
+            }
 
             return response()->json([
                 'message' => 'Center request approved successfully',
@@ -74,6 +91,14 @@ class CenterRequestController extends Controller
 
         try {
             $result = $this->centerRequestService->rejectRequest((int) $id, $validated);
+
+            $admins = SuperAdmin::all();
+            foreach ($admins as $admin) {
+                $admin->notify(new SystemNotification(
+                    "Request rejected for {$result->name}",
+                    "request"
+                ));
+            }
 
             return response()->json([
                 'message' => 'Center request rejected successfully',
