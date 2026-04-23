@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { login } from "../services/authService";
+import "../style/Login.css";
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -7,68 +8,97 @@ function Login() {
     password: "",
   });
 
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setMessage("");
+    e.preventDefault();
+    setError("");
+    setMessage("");
 
-  try {
-    const data = await login(formData);
+    try {
+      setLoading(true);
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("admin", JSON.stringify(data.admin));
+      const data = await login(formData);
 
-    setMessage("Login successful");
-    window.location.reload();
-  } catch (err) {
-    setError(err.response?.data?.message || "Login failed");
-  }
-};
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("admin", JSON.stringify(data.admin));
+
+      setMessage("Login successful 🚀");
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 600);
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "60px auto" }}>
-      <h2>Forminnova Login</h2>
+    <div className="login-page">
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "15px" }}>
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "10px", marginTop: "5px" }}
-          />
+      {/* LEFT DECOR */}
+      <div className="login-left">
+        <div className="login-brand">
+          <h1>FormInnova</h1>
+          <p>Admin Control Center</p>
         </div>
 
-        <div style={{ marginBottom: "15px" }}>
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "10px", marginTop: "5px" }}
-          />
-        </div>
+        <div className="login-glow"></div>
+      </div>
 
-        <button type="submit" style={{ padding: "10px 20px" }}>
-          Login
-        </button>
-      </form>
+      {/* RIGHT FORM */}
+      <div className="login-right">
 
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        <form className="login-card" onSubmit={handleSubmit}>
+          <h2>Welcome Back 👋</h2>
+          <p>Login to your admin dashboard</p>
+
+          {error && <div className="login-error">{error}</div>}
+          {message && <div className="login-success">{message}</div>}
+
+          <div className="login-group">
+            <label>Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="login-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <button className="login-btn" disabled={loading}>
+            {loading ? "Signing in..." : "Login"}
+          </button>
+
+          <p className="login-footer">
+            © {new Date().getFullYear()} FormInnova. All rights reserved.
+          </p>
+        </form>
+
+      </div>
     </div>
   );
 }
