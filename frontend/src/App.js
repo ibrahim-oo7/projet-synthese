@@ -7,6 +7,7 @@ import Payments from "./pages/Payments";
 import Settings from "./pages/Settings";
 import ActivityLogs from "./pages/ActivityLogs";
 import CenterDetails from "./pages/CenterDetails";
+import Notifications from "./pages/Notifications";
 
 function App() {
   const token = localStorage.getItem("token");
@@ -25,6 +26,7 @@ function App() {
       <Route path="/settings" element={<Settings />} />
       <Route path="/activity-logs" element={<ActivityLogs />} />
       <Route path="/centers/:id" element={<CenterDetails />} />
+      <Route path="/notifications" element={<Notifications />} />
     </Routes>
   );
 }
