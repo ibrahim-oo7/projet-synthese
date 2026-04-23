@@ -85,7 +85,7 @@ return (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-base font-medium text-[black]">Password</label>
-                <a href="#" className="text-[15.5px] font-medium text-[#15BE6A] hover:underline">Forgot password?</a>
+                <a href="/forgetPassword" className="text-[15.5px] font-medium text-[#15BE6A] hover:underline">Forgot password?</a>
               </div>
               <input type="password" value={password} onChange={onchangePassword} placeholder="••••••••"className="w-full px-4 py-3 text-base border border-[black]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#15BE6A]/20 focus:border-[#15BE6A] transition-colors text-gray-700 placeholder-[black]/40"
               />

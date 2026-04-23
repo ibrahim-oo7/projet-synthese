@@ -25,9 +25,9 @@ import Ho from "../componentsQuiz/Ho";
 import Certificate from "../pages/student/Certificate";
 import MyCertificates from "../pages/student/MyCertificates";
 
-import ForgetPassword from "../pages/public/forgetPassword";
-import ResetPassword from "../pages/public/resetPassword";
-import VerifyPassword from "../pages/public/verifyPassword";
+import ForgetPassword from "../center/forgetPassword";
+import ResetPassword from "../center/resetPassword";
+import VerifyPassword from "../center/verifyPassword";
 
 
 

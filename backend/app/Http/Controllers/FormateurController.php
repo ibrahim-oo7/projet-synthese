@@ -11,14 +11,18 @@ class FormateurController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        $centerId = auth('api')->id();
-        $formateurs = User::where('role', 'teacher')->where('center_id', $centerId)->get();
-        return response()->json($formateurs);
-    }
+  public function index()
+{
+    $centerId = auth('api')->id();
+
+    $formateurs = User::with('courses')
+        ->where('role', 'teacher')
+        ->where('center_id', $centerId)
+        ->get();
+
+    return response()->json($formateurs);
+}
         
-    
 
     /**
      * Show the form for creating a new resource.
@@ -64,11 +68,17 @@ class FormateurController extends Controller
      * Display the specified resource.
      */
     public function show(string $id)
-    {
-        $user = auth()->user();
-        $teachers = User::where('role', 'teacher')->where('center_id', $user->id)->where('id',$id)->first();
-        return response()->json($teachers);
-    }
+{
+    $centerId = auth('api')->id();
+
+    $teacher = User::with('courses')
+        ->where('role', 'teacher')
+        ->where('center_id', $centerId)
+        ->where('id', $id)
+        ->firstOrFail();
+
+    return response()->json($teacher);
+}
 
     /**
      * Show the form for editing the specified resource.

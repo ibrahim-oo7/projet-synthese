@@ -13,10 +13,19 @@ export default function CourseCard({ course, progress = 0, isEnrolled = false })
     );
   }
 
-  const image =
-    course.course_image ||
-    course.image ||
-    "https://via.placeholder.com/400x240?text=Course";
+const baseUrl = "http://127.0.0.1:8001";
+
+const rawImage =
+  course.course_image ||
+  course.image ||
+  course.image_url ||
+  "";
+
+const image = rawImage
+  ? rawImage.startsWith("http")
+    ? rawImage
+    : `${baseUrl}/storage/${rawImage}`
+  : "/default-course.jpg";
 
   const teacherName =
     course.teacher?.name ||
@@ -56,7 +65,15 @@ export default function CourseCard({ course, progress = 0, isEnrolled = false })
   return (
     <div style={styles.card}>
       <div style={styles.imageContainer}>
-        <img src={image} alt={course.title} style={styles.image} />
+      <img
+      src={image}
+      alt={course.title}
+      style={styles.image}
+      onError={(e) => {
+        console.log("IMAGE ERROR:", rawImage);
+        e.target.src = "/default-course.jpg";
+      }}
+    />
         <span style={styles.badge}>{level}</span>
       </div>
 

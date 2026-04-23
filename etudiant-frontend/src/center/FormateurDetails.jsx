@@ -9,17 +9,19 @@ export default function FormateurDetails() {
     const navigate= useNavigate();
     const [formateurs, setFormateurs] = useState([]);
     const { id } = useParams();
-    useEffect(() => {
-        axios.get("http://127.0.0.1:8001/api/teacher", {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-        }).then(res => {
-            setFormateurs(res.data);
-        })
-    }, []);
+   const [exist, setExist] = useState(null);
 
-    const exist = formateurs.find(f => f.id === Number(id));
+    useEffect(() => {
+      axios.get(`http://127.0.0.1:8001/api/teacher/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      }).then(res => {
+        setExist(res.data);
+      });
+    }, [id]);
+
+
 
     if (!exist) {
       return <div>Loading...</div>;
@@ -98,36 +100,78 @@ export default function FormateurDetails() {
       </div>
 
       {/* Courses Section */}
-      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-border">
-          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <BookOpen size={20} />
-            Courses by {exist?.name}
-          </h3>
-        </div>
-        
-        <div className="divide-y divide-border">
-          {exist?.courses?.map(course => (
-            <div key={course.id} className="p-6 hover:bg-secondary/10 transition-colors">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-semibold text-foreground">{course.title}</h4>
-                  <span className={`inline-block mt-1 px-2 py-1 rounded-full text-xs font-medium ${
-                    course.status === 'approved' 
-                      ? 'bg-green-500/15 text-green-600' 
-                      : 'bg-yellow-500/15 text-yellow-600'
-                  }`}>
-                    {course.status === 'approved' ? 'Approved' : 'Pending'}
-                  </span>
-                </div>
-                <button className="text-sm text-[#15BE6A] hover:underline">
-                  View Course →
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-border">
+        <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <BookOpen size={20} />
+          Courses by {exist?.name}
+        </h3>
       </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-secondary/20 text-foreground">
+            <tr>
+              <th className="px-6 py-4 font-semibold">Title</th>
+              <th className="px-6 py-4 font-semibold">Category</th>
+              <th className="px-6 py-4 font-semibold">Level</th>
+              <th className="px-6 py-4 font-semibold">Status</th>
+              <th className="px-6 py-4 font-semibold">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {exist?.courses && exist.courses.length > 0 ? (
+              exist.courses.map((course) => (
+                <tr
+                  key={course.id}
+                  className="border-t border-border hover:bg-secondary/10 transition-colors"
+                >
+                  <td className="px-6 py-4 font-medium text-foreground">
+                    {course.title}
+                  </td>
+
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {course.category || "N/A"}
+                  </td>
+
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {course.level || "N/A"}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                        course.status === "approved"
+                          ? "bg-green-500/15 text-green-600"
+                          : "bg-yellow-500/15 text-yellow-600"
+                      }`}
+                    >
+                      {course.status === "approved" ? "Approved" : "Pending"}
+                    </span>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => navigate(`/course/${course.id}`)}
+                      className="text-sm text-[#15BE6A] font-medium hover:underline"
+                    >
+                      View Course
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-6 text-center text-muted-foreground">
+                  No courses found for this formateur.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
     </DashboardLayout>
   );
 }

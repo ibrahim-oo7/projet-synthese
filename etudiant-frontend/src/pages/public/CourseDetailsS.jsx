@@ -142,18 +142,7 @@ export default function CourseDetails() {
     );
   }
 
-  const getEmbedUrl = (url) => {
-    if (!url) return null;
-    if (url.includes("youtu.be/")) {
-      const videoId = url.split("youtu.be/")[1]?.split("?")[0];
-      return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-    }
-    if (url.includes("v=")) {
-      const videoId = url.split("v=")[1]?.split("&")[0];
-      return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-    }
-    return null;
-  };
+
 
   const handleLessonClick = async (lesson, moduleIndex, lessonIndex) => {
     const lessonKey = `${moduleIndex}-${lessonIndex}`;
@@ -175,12 +164,44 @@ export default function CourseDetails() {
     await markLessonAsCompleted(moduleIndex, lessonIndex);
   };
 
+    const baseUrl = "http://127.0.0.1:8001";
+    const getVideoUrl = (videoPath) => {
+      if (!videoPath) return "";
+
+      
+      if (videoPath.startsWith("http")) {
+        return videoPath;
+      }
+
+      
+      return `${baseUrl}/storage/${videoPath}`;
+    };
+
+const rawCourseImage =
+  course.image ||
+  course.course_image ||
+  course.image_url ||
+  "";
+
+const courseImage = rawCourseImage
+  ? rawCourseImage.startsWith("http")
+    ? rawCourseImage
+    : `${baseUrl}/storage/${rawCourseImage}`
+  : "/default-course.jpg";
+
   return (
     <div style={styles.container}>
       {/* Hero */}
       <div style={styles.heroSection}>
         <div style={styles.imageWrapper}>
-          <img src={course.image} alt={course.title} style={styles.image} />
+          <img
+          src={courseImage}
+          alt={course.title}
+          style={styles.image}
+          onError={(e) => {
+            e.target.src = "/default-course.jpg";
+          }}
+        />
           <div style={styles.imageOverlay}></div>
           <div style={styles.imageContent}>
             <h1 style={styles.title}>{course.title}</h1>
@@ -344,26 +365,27 @@ export default function CourseDetails() {
           </div>
 
           {/* RIGHT: Video */}
-          <div style={styles.videoArea}>
-            {video ? (
-              <iframe
-                key={videoKey}
-                width="100%"
-                height="100%"
-                src={getEmbedUrl(video)}
-                title="Video"
-                allow="autoplay; encrypted-media"
-                allowFullScreen
-                style={styles.videoIframe}
-              />
-            ) : (
-              <div style={styles.videoPlaceholder}>
-                <div style={styles.placeholderIcon}>▶</div>
-                <p style={styles.placeholderText}>Select a lesson to start watching</p>
-                <p style={styles.placeholderSub}>Choose any lesson from the sidebar on the left</p>
-              </div>
-            )}
-          </div>
+         <div style={styles.videoArea}>
+          {video ? (
+            <video
+              key={videoKey}
+              width="100%"
+              height="100%"
+              controls
+              autoPlay
+              style={styles.videoIframe}
+            >
+             <source src={getVideoUrl(video)} />
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <div style={styles.videoPlaceholder}>
+              <div style={styles.placeholderIcon}>▶</div>
+              <p style={styles.placeholderText}>Select a lesson to start watching</p>
+              <p style={styles.placeholderSub}>Choose any lesson from the sidebar on the left</p>
+            </div>
+          )}
+        </div>
 
         </div>
       </div>

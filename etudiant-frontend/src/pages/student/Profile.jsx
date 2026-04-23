@@ -16,7 +16,8 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import CourseCard from "../../components/CourseCard";
-import { courses } from "../../data/courses";
+
+import { toast } from "react-toastify";
 
 const styles = {
   container: {
@@ -318,6 +319,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileImage, setProfileImage] = useState(null);
+  const [allCourses, setAllCourses] = useState([]);
 
   const [editedUser, setEditedUser] = useState({
     name: "",
@@ -325,9 +327,11 @@ export default function Profile() {
     username: "",
   });
 
-  const enrolledCourses = courses.filter((course) =>
+  const enrolledCourses = allCourses.filter((course) =>
     myCoursesIds.includes(Number(course.id))
   );
+  
+  
 
   const currentCourses = enrolledCourses.filter(
     (course) => Number(coursesProgress[course.id] || 0) < 100
@@ -338,13 +342,14 @@ export default function Profile() {
   );
 
   const stats = {
-    currentCourses: currentCourses.length,
+    totalCourses: enrolledCourses.length,
     completedCourses: completedCourses.length,
-    certificates: certificates.length,
     totalHours: enrolledCourses.reduce(
       (total, course) => total + (parseInt(course.duration) || 5),
       0
     ),
+    certificates: certificates.length,
+    streak: 7
   };
 
   useEffect(() => {
@@ -362,83 +367,113 @@ export default function Profile() {
     Accept: "application/json",
   };
 
-  const fetchAllProfileData = async () => {
-    try {
-      setLoading(true);
+ const fetchAllProfileData = async () => {
+  try {
+    setLoading(true);
 
-      const profileRes = await axios.get(
-        "http://127.0.0.1:8001/api/student/profile",
+    const profileRes = await axios.get(
+      "http://127.0.0.1:8001/api/student/profile",
+      { headers: authHeaders }
+    );
+
+    const freshUser = profileRes.data;
+    setUser(freshUser);
+    localStorage.setItem("user", JSON.stringify(freshUser));
+
+    setEditedUser({
+      name: freshUser.name || "",
+      email: freshUser.email || "",
+      username: freshUser.username || freshUser.name || "",
+    });
+
+    let enrolledCourseIds = [];
+
+    if (freshUser?.id) {
+      try {
+        const enrollmentsRes = await axios.get(
+          "http://127.0.0.1:8000/api/my-enrollments",
+          { headers: authHeaders }
+        );
+
+        enrolledCourseIds = enrollmentsRes.data.map((e) =>
+          Number(e.course_id)
+        );
+
+        setMyCoursesIds(enrolledCourseIds);
+        console.log("ENROLLED IDS:", enrolledCourseIds);
+      } catch (error) {
+        console.log(
+          "Error fetching enrollments:",
+          error.response?.data || error.message
+        );
+      }
+
+      try {
+        const progressRes = await axios.get(
+          `http://127.0.0.1:8000/api/progress/${freshUser.id}`,
+          { headers: authHeaders }
+        );
+
+        const formattedProgress = {};
+        progressRes.data.forEach((item) => {
+          formattedProgress[Number(item.course_id)] = Number(item.percentage);
+        });
+
+        setCoursesProgress(formattedProgress);
+        console.log("PROGRESS:", formattedProgress);
+      } catch (error) {
+        console.log(
+          "Error fetching progress:",
+          error.response?.data || error.message
+        );
+      }
+
+      try {
+        const certificatesRes = await axios.get(
+          "http://127.0.0.1:8000/api/my-certificates",
+          { headers: authHeaders }
+        );
+        setCertificates(certificatesRes.data || []);
+      } catch (error) {
+        console.log(
+          "Error fetching certificates:",
+          error.response?.data || error.message
+        );
+      }
+    }
+
+    try {
+      const coursesRes = await axios.get(
+        "http://127.0.0.1:8001/api/courses",
         { headers: authHeaders }
       );
 
-      const freshUser = profileRes.data;
-      setUser(freshUser);
-      localStorage.setItem("user", JSON.stringify(freshUser));
+      const coursesData = coursesRes.data || [];
+      setAllCourses(coursesData);
 
-      setEditedUser({
-        name: freshUser.name || "",
-        email: freshUser.email || "",
-        username: freshUser.username || freshUser.name || "",
-      });
-
-      if (freshUser?.id) {
-        try {
-          const enrollmentsRes = await axios.get(
-            "http://127.0.0.1:8001/api/my-enrollments",
-            { headers: authHeaders }
-          );
-          const enrolledCourseIds = enrollmentsRes.data.map((e) =>
-            Number(e.course_id)
-          );
-          setMyCoursesIds(enrolledCourseIds);
-        } catch (error) {
-          console.log(
-            "Error fetching enrollments:",
-            error.response?.data || error.message
-          );
-        }
-
-        try {
-          const progressRes = await axios.get(
-            `http://127.0.0.1:8001/api/progress/${freshUser.id}`,
-            { headers: authHeaders }
-          );
-
-          const formattedProgress = {};
-          progressRes.data.forEach((item) => {
-            formattedProgress[Number(item.course_id)] = Number(item.percentage);
-          });
-          setCoursesProgress(formattedProgress);
-        } catch (error) {
-          console.log(
-            "Error fetching progress:",
-            error.response?.data || error.message
-          );
-        }
-
-        try {
-          const certificatesRes = await axios.get(
-            "http://127.0.0.1:8001/api/my-certificates",
-            { headers: authHeaders }
-          );
-          setCertificates(certificatesRes.data || []);
-        } catch (error) {
-          console.log(
-            "Error fetching certificates:",
-            error.response?.data || error.message
-          );
-        }
-      }
+      console.log("ALL COURSES:", coursesData);
+      console.log(
+        "MATCHED ENROLLED COURSES:",
+        coursesData.filter((course) =>
+          enrolledCourseIds.includes(Number(course.id))
+        )
+      );
     } catch (error) {
       console.log(
-        "Error fetching profile:",
+        "Error fetching courses:",
         error.response?.data || error.message
       );
-      navigate("/login");
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    console.log(
+      "Error fetching profile:",
+      error.response?.data || error.message
+    );
+    navigate("/login");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleEdit = () => setIsEditing(true);
 
@@ -494,6 +529,7 @@ export default function Profile() {
         username: updatedUser.username || updatedUser.name || "",
       });
 
+       toast.success("profile update successfully");
       setProfileImage(null);
       setIsEditing(false);
     } catch (error) {
@@ -678,7 +714,7 @@ export default function Profile() {
             <FaBookOpen />
           </div>
           <div style={styles.statInfo}>
-            <div style={styles.statValue}>{stats.currentCourses}</div>
+            <div style={styles.statValue}>{stats.totalCourses}</div>
             <div style={styles.statLabel}>Current Courses</div>
           </div>
         </div>
@@ -740,9 +776,9 @@ export default function Profile() {
           </div>
           <div style={styles.certificateList}>
             {certificates.map((cert) => {
-              const courseTitle =
-                courses.find((course) => course.id === Number(cert.course_id))
-                  ?.title || `Course #${cert.course_id}`;
+             const courseTitle =
+              allCourses.find((course) => Number(course.id) === Number(cert.course_id))
+                ?.title || `Course #${cert.course_id}`;
 
               return (
                 <div

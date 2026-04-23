@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -38,6 +39,10 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/student/profile', [AuthController::class, 'profile']);
     Route::put('/student/update-profile', [AuthController::class, 'updateProfile']);
 });
+
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendCode']);
+Route::post('/verify-code', [ForgotPasswordController::class, 'verifyCode']);
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);Route::middleware('auth:api')->put('/update-profile', [AuthController::class, 'updateProfile']);
 
 Route::middleware('auth:api')->resource('/teacher', FormateurController::class);
 // Route::middleware('auth:api')->resource('/teacher', FormateurController::class);
