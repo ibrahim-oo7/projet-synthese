@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import SuperNavbar from "../components/SuperNavbar";
-import api from "../services/api";
+import {
+  getNotifications,
+  markNotificationAsRead
+} from "../services/notificationsService";
 import { logout } from "../services/authService";
 import "../style/Notifications.css";
 
@@ -8,42 +11,32 @@ function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔁 fetch notifications
+  // 📥 fetch
   const fetchNotifications = async () => {
-    try {
-      const res = await api.get("/notifications");
-      setNotifications(res.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ⚡ mark as read
-  const markAsRead = async (id) => {
-    try {
-      await api.post(`/notifications/${id}/read`);
-
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === id ? { ...n, read_at: new Date() } : n
-        )
-      );
-    } catch (err) {
-      console.error(err);
-    }
+    const data = await getNotifications();
+    setNotifications(data);
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchNotifications();
 
-    // ⚡ real-time fake (polling)
     const interval = setInterval(fetchNotifications, 4000);
-
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ mark as read
+  const handleMarkAsRead = async (id) => {
+    await markNotificationAsRead(id);
+
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === id ? { ...n, read_at: new Date() } : n
+      )
+    );
+  };
+
+  // 🚪 logout
   const handleLogout = async () => {
     await logout();
     localStorage.removeItem("token");
@@ -52,9 +45,11 @@ function Notifications() {
 
   return (
     <div className="sup-page">
+
       <SuperNavbar onLogout={handleLogout} />
 
       <main className="sup-main">
+
         <div className="sup-page-intro">
           <h1>Notifications</h1>
           <p>All system alerts and activities</p>
@@ -64,11 +59,12 @@ function Notifications() {
           <div className="sup-state-box">Loading...</div>
         ) : notifications.length > 0 ? (
           <div className="notif-list">
+
             {notifications.map((n) => (
               <div
                 key={n.id}
-                onClick={() => markAsRead(n.id)}  
                 className={`notif-card ${!n.read_at ? "unread" : ""}`}
+                onClick={() => handleMarkAsRead(n.id)}
               >
                 <div className="notif-content">
                   <p>{n.data.message}</p>
@@ -78,10 +74,12 @@ function Notifications() {
                 </div>
               </div>
             ))}
+
           </div>
         ) : (
           <p className="sup-empty">No notifications</p>
         )}
+
       </main>
     </div>
   );

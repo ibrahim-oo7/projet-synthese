@@ -51,3 +51,4 @@ export const markAllAsRead = async () => {
     return null;
   }
 };
+

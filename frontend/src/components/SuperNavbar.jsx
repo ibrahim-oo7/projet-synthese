@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import api from "../services/api";
+import {
+  getNotifications,
+  markNotificationAsRead
+} from "../services/notificationsService";
 import "../style/Navbar.css";
 
 function SuperNavbar({ onRefresh, refreshing, onLogout }) {
@@ -18,23 +21,41 @@ function SuperNavbar({ onRefresh, refreshing, onLogout }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
 
+  // 📥 fetch notifications
   const fetchNotifications = async () => {
-    try {
-      const res = await api.get("/notifications");
-      setNotifications(res.data);
-    } catch {}
+    const data = await getNotifications();
+    setNotifications(data);
   };
 
   useEffect(() => {
     fetchNotifications();
+
     const interval = setInterval(fetchNotifications, 5000);
     return () => clearInterval(interval);
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
 
+  // 🔔 click notification
+  const handleNotifClick = async (n) => {
+    if (!n.read_at) {
+      await markNotificationAsRead(n.id);
+
+      setNotifications((prev) =>
+        prev.map((item) =>
+          item.id === n.id ? { ...item, read_at: new Date() } : item
+        )
+      );
+    }
+
+    navigate("/notifications");
+    setOpen(false);
+  };
+
   return (
     <header className="sup-navbar">
+
+      {/* BRAND */}
       <div className="sup-navbar-brand">
         <div className="sup-brand-mark">F</div>
         <div className="sup-brand-text">
@@ -43,6 +64,7 @@ function SuperNavbar({ onRefresh, refreshing, onLogout }) {
         </div>
       </div>
 
+      {/* NAV */}
       <nav className="sup-navbar-links">
         {navItems.map((item) => (
           <NavLink
@@ -57,27 +79,32 @@ function SuperNavbar({ onRefresh, refreshing, onLogout }) {
         ))}
       </nav>
 
+      {/* ACTIONS */}
       <div className="sup-navbar-actions">
+
+        {/* 🔔 NOTIFICATIONS */}
         <div className="sup-notif">
           <button onClick={() => setOpen(!open)}>
             🔔
             {unreadCount > 0 && (
-              <span className="sup-notif-badge">{unreadCount}</span>
+              <span className="sup-notif-badge">
+                {unreadCount}
+              </span>
             )}
           </button>
 
           {open && (
             <div className="sup-notif-dropdown">
+
               {notifications.length > 0 ? (
                 <>
-                  {notifications.map((n) => (
+                  {notifications.slice(0, 5).map((n) => (
                     <div
                       key={n.id}
-                      className="sup-notif-item"
-                      onClick={() => {
-                        navigate("/notifications");
-                        setOpen(false);
-                      }}
+                      className={`sup-notif-item ${
+                        !n.read_at ? "unread" : ""
+                      }`}
+                      onClick={() => handleNotifClick(n)}
                     >
                       {n.data.message}
                     </div>
@@ -96,10 +123,12 @@ function SuperNavbar({ onRefresh, refreshing, onLogout }) {
               ) : (
                 <p className="sup-empty">No notifications</p>
               )}
+
             </div>
           )}
         </div>
 
+        {/* REFRESH */}
         <button
           className="sup-btn sup-btn-light"
           onClick={onRefresh}
@@ -108,9 +137,11 @@ function SuperNavbar({ onRefresh, refreshing, onLogout }) {
           {refreshing ? "Refreshing..." : "Refresh"}
         </button>
 
+        {/* LOGOUT */}
         <button className="sup-btn sup-btn-danger" onClick={onLogout}>
           Logout
         </button>
+
       </div>
     </header>
   );
