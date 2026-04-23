@@ -2,9 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import SuperNavbar from "../components/SuperNavbar";
 import api from "../services/api";
 import { logout } from "../services/authService";
+import { useSettings } from "../pages/SettingsContext"; // ⭐ NEW
 import "../style/Settings.css";
 
 function Settings() {
+  const { setSettings } = useSettings(); // ⭐ NEW (LIVE NAV UPDATE)
+
   const [formData, setFormData] = useState({
     site_name: "",
     admin_email: "",
@@ -16,14 +19,13 @@ function Settings() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  // 📥 FETCH SETTINGS
   const fetchSettings = useCallback(async (manualRefresh = false) => {
     try {
       setError("");
       setSuccessMessage("");
 
-      if (manualRefresh) {
-        setRefreshing(true);
-      }
+      if (manualRefresh) setRefreshing(true);
 
       const response = await api.get("/settings");
 
@@ -31,6 +33,7 @@ function Settings() {
         site_name: response.data?.site_name || "",
         admin_email: response.data?.admin_email || "",
       });
+
     } catch (err) {
       console.error("Settings fetch error:", err);
       setError("Failed to load settings.");
@@ -69,6 +72,7 @@ function Settings() {
     }));
   };
 
+  // 💾 SAVE SETTINGS (DB + LIVE NAV UPDATE)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -77,9 +81,13 @@ function Settings() {
       setError("");
       setSuccessMessage("");
 
-      await api.put("/settings", formData);
+      const res = await api.put("/settings", formData);
+
+      // ⚡ UPDATE GLOBAL CONTEXT (NAVBAR LIVE CHANGE)
+      setSettings(res.data?.data || formData);
 
       setSuccessMessage("Settings updated successfully.");
+
     } catch (err) {
       console.error("Settings update error:", err);
       setError(err?.response?.data?.message || "Failed to update settings.");
@@ -103,6 +111,7 @@ function Settings() {
 
   return (
     <div className="sup-page">
+
       <SuperNavbar
         onRefresh={handleRefresh}
         refreshing={refreshing}
@@ -110,6 +119,7 @@ function Settings() {
       />
 
       <main className="sup-main">
+
         <section className="sup-topbar-row">
           <div className="sup-page-intro">
             <h1>Settings</h1>
@@ -118,7 +128,10 @@ function Settings() {
         </section>
 
         <section className="sup-settings-layout">
+
+          {/* 🟦 FORM PANEL */}
           <div className="sup-panel sup-animate-up">
+
             <div className="sup-panel-head">
               <div>
                 <h3>General Settings</h3>
@@ -126,12 +139,20 @@ function Settings() {
               </div>
             </div>
 
-            {error ? <div className="sup-alert sup-alert-error">{error}</div> : null}
-            {successMessage ? (
-              <div className="sup-alert sup-alert-success">{successMessage}</div>
-            ) : null}
+            {error && (
+              <div className="sup-alert sup-alert-error">
+                {error}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="sup-alert sup-alert-success">
+                {successMessage}
+              </div>
+            )}
 
             <form className="sup-form" onSubmit={handleSubmit}>
+
               <div className="sup-form-group">
                 <label className="sup-label">Site Name</label>
                 <input
@@ -159,6 +180,7 @@ function Settings() {
               </div>
 
               <div className="sup-form-actions">
+
                 <button
                   type="button"
                   className="sup-btn sup-btn-light"
@@ -175,11 +197,16 @@ function Settings() {
                 >
                   {saving ? "Saving..." : "Save Changes"}
                 </button>
+
               </div>
+
             </form>
+
           </div>
 
+          {/* 🟩 PREVIEW PANEL */}
           <div className="sup-panel sup-animate-up delay-1">
+
             <div className="sup-panel-head">
               <div>
                 <h3>Settings Preview</h3>
@@ -188,6 +215,7 @@ function Settings() {
             </div>
 
             <div className="sup-preview-card">
+
               <div className="sup-preview-item">
                 <span>Platform Name</span>
                 <strong>{formData.site_name || "-"}</strong>
@@ -197,10 +225,15 @@ function Settings() {
                 <span>Administrator Email</span>
                 <strong>{formData.admin_email || "-"}</strong>
               </div>
+
             </div>
+
           </div>
+
         </section>
+
       </main>
+
     </div>
   );
 }

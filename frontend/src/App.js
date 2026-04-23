@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Centers from "./pages/Centers";
@@ -9,6 +10,8 @@ import ActivityLogs from "./pages/ActivityLogs";
 import CenterDetails from "./pages/CenterDetails";
 import Notifications from "./pages/Notifications";
 
+import { SettingsProvider } from "./pages/SettingsContext";
+
 function App() {
   const token = localStorage.getItem("token");
 
@@ -17,17 +20,19 @@ function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/requests" element={<Requests />} />
-      <Route path="/centers" element={<Centers />} />
-      <Route path="/payments" element={<Payments />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/activity-logs" element={<ActivityLogs />} />
-      <Route path="/centers/:id" element={<CenterDetails />} />
-      <Route path="/notifications" element={<Notifications />} />
-    </Routes>
+    <SettingsProvider>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/requests" element={<Requests />} />
+        <Route path="/centers" element={<Centers />} />
+        <Route path="/payments" element={<Payments />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/activity-logs" element={<ActivityLogs />} />
+        <Route path="/centers/:id" element={<CenterDetails />} />
+        <Route path="/notifications" element={<Notifications />} />
+      </Routes>
+    </SettingsProvider>
   );
 }
 

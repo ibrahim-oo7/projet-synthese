@@ -4,10 +4,12 @@ import {
   getNotifications,
   markNotificationAsRead
 } from "../services/notificationsService";
+import { useSettings } from "../pages/SettingsContext";
 import "../style/Navbar.css";
 
 function SuperNavbar({ onRefresh, refreshing, onLogout }) {
   const navigate = useNavigate();
+  const { settings } = useSettings();
 
   const navItems = [
     { label: "Dashboard", to: "/dashboard" },
@@ -21,22 +23,19 @@ function SuperNavbar({ onRefresh, refreshing, onLogout }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
 
-  // 📥 fetch notifications
   const fetchNotifications = async () => {
-    const data = await getNotifications();
-    setNotifications(data);
+    const res = await getNotifications();
+    setNotifications(res);
   };
 
   useEffect(() => {
     fetchNotifications();
-
     const interval = setInterval(fetchNotifications, 5000);
     return () => clearInterval(interval);
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
 
-  // 🔔 click notification
   const handleNotifClick = async (n) => {
     if (!n.read_at) {
       await markNotificationAsRead(n.id);
@@ -55,12 +54,12 @@ function SuperNavbar({ onRefresh, refreshing, onLogout }) {
   return (
     <header className="sup-navbar">
 
-      {/* BRAND */}
+      {/* BRAND (🔥 LIVE FROM DB) */}
       <div className="sup-navbar-brand">
         <div className="sup-brand-mark">F</div>
         <div className="sup-brand-text">
-          <h2>FormInnova</h2>
-          <p>Welcome back, Admin</p>
+          <h2>{settings.site_name}</h2>
+          <p>Welcome back, {settings.admin_email}</p>
         </div>
       </div>
 
@@ -87,9 +86,7 @@ function SuperNavbar({ onRefresh, refreshing, onLogout }) {
           <button onClick={() => setOpen(!open)}>
             🔔
             {unreadCount > 0 && (
-              <span className="sup-notif-badge">
-                {unreadCount}
-              </span>
+              <span className="sup-notif-badge">{unreadCount}</span>
             )}
           </button>
 
@@ -101,9 +98,7 @@ function SuperNavbar({ onRefresh, refreshing, onLogout }) {
                   {notifications.slice(0, 5).map((n) => (
                     <div
                       key={n.id}
-                      className={`sup-notif-item ${
-                        !n.read_at ? "unread" : ""
-                      }`}
+                      className={`sup-notif-item ${!n.read_at ? "unread" : ""}`}
                       onClick={() => handleNotifClick(n)}
                     >
                       {n.data.message}

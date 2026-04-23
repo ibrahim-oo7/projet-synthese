@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Setting;
 
+
 class SettingsService
 {
     public function getSettings()
@@ -13,14 +14,18 @@ class SettingsService
 
     public function updateSettings(array $data)
     {
+        // 🧠 force single row system (best SaaS pattern)
         $settings = Setting::first();
 
         if (!$settings) {
-            $settings = Setting::create($data);
-        } else {
-            $settings->update($data);
+            $settings = new Setting();
         }
 
-        return $settings;
+        $settings->site_name = $data['site_name'];
+        $settings->admin_email = $data['admin_email'];
+
+        $settings->save();
+
+        return $settings->fresh();
     }
 }
